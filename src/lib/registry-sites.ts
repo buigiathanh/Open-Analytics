@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { createAppAdminClient } from "@/lib/supabase/admin";
 import type { Site } from "@/lib/types";
 
 export async function getRegistryUser(
@@ -47,5 +48,23 @@ export async function getSiteForUser(
     return null;
   }
 
+  return (data as Site) ?? null;
+}
+
+/** Public realtime share page — only when share_realtime_enabled is true. */
+export async function getSiteForPublicShare(
+  siteId: string
+): Promise<Site | null> {
+  const admin = createAppAdminClient();
+  if (!admin) return null;
+
+  const { data, error } = await admin
+    .from("projects")
+    .select("*")
+    .eq("id", siteId)
+    .eq("share_realtime_enabled", true)
+    .maybeSingle();
+
+  if (error) return null;
   return (data as Site) ?? null;
 }

@@ -56,9 +56,17 @@ const RealtimeVisitorMap = dynamic(
 interface RealtimeViewProps {
   site: Site;
   initialEvents: AnalyticsEvent[];
+  /** Owner dashboard (signed in) vs public /share link. */
+  mode?: "owner" | "public";
+  shareRealtimeEnabled?: boolean;
 }
 
-function RealtimeViewInner({ site, initialEvents }: RealtimeViewProps) {
+function RealtimeViewInner({
+  site,
+  initialEvents,
+  mode = "owner",
+  shareRealtimeEnabled = false,
+}: RealtimeViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -249,6 +257,8 @@ function RealtimeViewInner({ site, initialEvents }: RealtimeViewProps) {
       </div>
       <RealtimeOverlay
         site={site}
+        mode={mode}
+        shareRealtimeEnabled={shareRealtimeEnabled}
         liveCount={feed.length}
         minuteSeries={minuteSeries}
         referrers={referrers}

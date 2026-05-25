@@ -10,6 +10,7 @@ create table public.projects (
   supabase_project_id text,
   supabase_url text,
   supabase_anon_key text,
+  share_realtime_enabled boolean not null default false,
   user_id uuid not null references auth.users (id) on delete cascade,
   created_at timestamptz not null default now()
 );

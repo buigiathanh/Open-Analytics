@@ -101,6 +101,8 @@ import type { RealtimeMapMode } from "@/lib/realtime-url";
 
 interface RealtimeOverlayProps {
   site: Site;
+  mode: "owner" | "public";
+  shareRealtimeEnabled: boolean;
   liveCount: number;
   minuteSeries: { label: string; pageviews: number }[];
   referrers: BreakdownRow[];
@@ -119,6 +121,8 @@ interface RealtimeOverlayProps {
 
 export function RealtimeOverlay({
   site,
+  mode,
+  shareRealtimeEnabled: shareEnabledInitial,
   liveCount,
   minuteSeries,
   referrers,
@@ -137,9 +141,39 @@ export function RealtimeOverlay({
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const [shareOpen, setShareOpen] = useState(false);
+  const [shareEnabled, setShareEnabled] = useState(shareEnabledInitial);
+  const [shareSaving, setShareSaving] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setShareEnabled(shareEnabledInitial);
+  }, [shareEnabledInitial]);
+
+  async function setPublicShareEnabled(enabled: boolean) {
+    setShareSaving(true);
+    setShareError(null);
+    try {
+      const res = await fetch(`/api/sites/${site.id}/share`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setShareError(data.error ?? "Could not update sharing.");
+        return;
+      }
+      setShareEnabled(!!data.share_realtime_enabled);
+    } catch {
+      setShareError("Network error. Try again.");
+    } finally {
+      setShareSaving(false);
+    }
+  }
 
   const closeShare = useCallback(() => setShareOpen(false), []);
 
@@ -202,15 +236,19 @@ export function RealtimeOverlay({
     <div className="pointer-events-none absolute inset-0 z-20 flex flex-col p-3 sm:p-5">
       <div className="pointer-events-auto flex items-center justify-between gap-3">
         <div className={`${GLASS} flex items-center gap-3 px-3 py-2`}>
-          <Link
-            href={`/app/${site.id}`}
-            className="text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
-          >
-            ← Stats
-          </Link>
-          <span className="text-zinc-300 dark:text-zinc-500">|</span>
+          {mode === "owner" ? (
+            <>
+              <Link
+                href={`/app/${site.id}`}
+                className="text-xs text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
+              >
+                ← Stats
+              </Link>
+              <span className="text-zinc-300 dark:text-zinc-500">|</span>
+            </>
+          ) : null}
           <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
-            Open Analytics
+            {mode === "public" ? site.name : "Open Analytics"}
           </span>
           <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-white/10 dark:text-emerald-400">
             Realtime
@@ -257,6 +295,7 @@ export function RealtimeOverlay({
               <Map className="size-4" strokeWidth={2} />
             </button>
           </div>
+          {mode === "owner" ? (
           <div className="relative" ref={shareRef}>
             <button
               type="button"
@@ -283,10 +322,8 @@ export function RealtimeOverlay({
                       Share realtime
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                      The link includes your current theme (
-                      {isDark ? "dark" : "light"}) and map mode (
-                      {mapViewMode === "globe" ? "globe" : "2D"}) so viewers see
-                      the same view.
+                      Public link format: <code className="text-[10px]">/share/…/realtime</code>.
+                      No sign-in required when sharing is enabled.
                     </p>
                   </div>
                   <button
@@ -300,67 +337,95 @@ export function RealtimeOverlay({
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Share link
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-zinc-200/80 bg-white/50 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-950/50">
+                    <span className="text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                      Allow public share link
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={shareEnabled}
+                      disabled={shareSaving}
+                      onChange={(e) => setPublicShareEnabled(e.target.checked)}
+                      className="size-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                  </label>
+                  {shareError && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{shareError}</p>
+                  )}
+                  {!shareEnabled ? (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Enable sharing to activate the public URL. Disabled links return 404.
                     </p>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value={shareUrl}
-                        className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white/90 px-2.5 py-1.5 text-xs text-zinc-800 dark:border-zinc-600 dark:bg-zinc-950/80 dark:text-zinc-200"
-                        onFocus={(e) => e.target.select()}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => copyText(shareUrl, "link")}
-                        className={cn(
-                          ICON_BTN,
-                          "shrink-0",
-                          copiedLink && ICON_BTN_ACTIVE
-                        )}
-                        aria-label="Copy link"
-                        title="Copy link"
-                      >
-                        {copiedLink ? (
-                          <Check className="size-4" strokeWidth={2} />
-                        ) : (
-                          <Copy className="size-4" strokeWidth={2} />
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Theme ({isDark ? "dark" : "light"}) and map (
+                        {mapViewMode === "globe" ? "globe" : "2D"}) are included in the link.
+                      </p>
+                      <div>
+                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                          Share link
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            readOnly
+                            value={shareUrl}
+                            className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white/90 px-2.5 py-1.5 text-xs text-zinc-800 dark:border-zinc-600 dark:bg-zinc-950/80 dark:text-zinc-200"
+                            onFocus={(e) => e.target.select()}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => copyText(shareUrl, "link")}
+                            className={cn(
+                              ICON_BTN,
+                              "shrink-0",
+                              copiedLink && ICON_BTN_ACTIVE
+                            )}
+                            aria-label="Copy link"
+                            title="Copy link"
+                          >
+                            {copiedLink ? (
+                              <Check className="size-4" strokeWidth={2} />
+                            ) : (
+                              <Copy className="size-4" strokeWidth={2} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
 
-                  <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                      Embed on site (iframe)
-                    </p>
-                    <pre className="max-h-24 overflow-auto rounded-lg border border-zinc-200 bg-zinc-50/90 p-2 text-[10px] leading-relaxed text-zinc-700 dark:border-zinc-600 dark:bg-zinc-950/80 dark:text-zinc-300">
-                      {embedCode}
-                    </pre>
-                    <button
-                      type="button"
-                      onClick={() => copyText(embedCode, "embed")}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                    >
-                      {copiedEmbed ? (
-                        <>
-                          <Check className="size-3.5" />
-                          Embed code copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="size-3.5" />
-                          Copy embed code
-                        </>
-                      )}
-                    </button>
-                  </div>
+                      <div>
+                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                          Embed on site (iframe)
+                        </p>
+                        <pre className="max-h-24 overflow-auto rounded-lg border border-zinc-200 bg-zinc-50/90 p-2 text-[10px] leading-relaxed text-zinc-700 dark:border-zinc-600 dark:bg-zinc-950/80 dark:text-zinc-300">
+                          {embedCode}
+                        </pre>
+                        <button
+                          type="button"
+                          onClick={() => copyText(embedCode, "embed")}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        >
+                          {copiedEmbed ? (
+                            <>
+                              <Check className="size-3.5" />
+                              Embed code copied
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-3.5" />
+                              Copy embed code
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
           </div>
+          ) : null}
           <ThemeToggle />
         </div>
       </div>

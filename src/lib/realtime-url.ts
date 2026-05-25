@@ -30,7 +30,8 @@ export function realtimeQueryString(opts: {
   return params.toString();
 }
 
-export function buildRealtimePath(
+/** Authenticated dashboard realtime (requires sign-in). */
+export function buildAppRealtimePath(
   siteId: string,
   opts: { theme: RealtimeThemeMode; map: RealtimeMapMode }
 ): string {
@@ -38,12 +39,21 @@ export function buildRealtimePath(
   return `/app/${siteId}/realtime?${q}`;
 }
 
+/** Public share link (no sign-in; requires share_realtime_enabled on project). */
+export function buildPublicRealtimeSharePath(
+  siteId: string,
+  opts: { theme: RealtimeThemeMode; map: RealtimeMapMode }
+): string {
+  const q = realtimeQueryString(opts);
+  return `/share/${siteId}/realtime?${q}`;
+}
+
 export function buildRealtimeShareUrl(
   base: string,
   siteId: string,
   opts: { theme: RealtimeThemeMode; map: RealtimeMapMode }
 ): string {
-  return `${base.replace(/\/$/, "")}${buildRealtimePath(siteId, opts)}`;
+  return `${base.replace(/\/$/, "")}${buildPublicRealtimeSharePath(siteId, opts)}`;
 }
 
 export function realtimeUrlMatches(

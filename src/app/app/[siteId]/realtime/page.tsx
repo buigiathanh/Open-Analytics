@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import { SetupBanner } from "@/components/SetupBanner";
 import { RealtimeView } from "@/components/dashboard/RealtimeView";
-import { REALTIME_WINDOW_MS } from "@/lib/constants";
+import { fetchRecentRealtimeEvents } from "@/lib/realtime-events";
 import { getRegistryUser, getSiteForUser } from "@/lib/registry-sites";
 import { getSupabase } from "@/lib/supabase";
 import { getSupabaseForSite } from "@/lib/supabase-project";
-import type { AnalyticsEvent, Site } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +29,7 @@ export default async function RealtimePage({ params }: PageProps) {
 
   const siteRow = await getSiteForUser(registry, siteId, user.id);
   if (!siteRow) notFound();
-  const eventsDb = getSupabaseForSite(siteRow);
-  if (!eventsDb) {
+  if (!getSupabaseForSite(siteRow)) {
     return (
       <main className="px-4 py-10">
         <SetupBanner />
@@ -39,20 +37,15 @@ export default async function RealtimePage({ params }: PageProps) {
     );
   }
 
-  const since = new Date(Date.now() - REALTIME_WINDOW_MS).toISOString();
-  const { data: events } = await eventsDb
-    .from("events")
-    .select("*")
-    .eq("site_key", siteRow.site_key)
-    .gte("created_at", since)
-    .order("created_at", { ascending: false })
-    .limit(500);
+  const events = await fetchRecentRealtimeEvents(siteRow);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
       <RealtimeView
         site={siteRow}
-        initialEvents={(events as AnalyticsEvent[]) ?? []}
+        initialEvents={events}
+        mode="owner"
+        shareRealtimeEnabled={siteRow.share_realtime_enabled ?? false}
       />
     </div>
   );

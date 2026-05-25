@@ -7,6 +7,7 @@ export interface Site {
   supabase_project_id: string | null;
   supabase_url: string | null;
   supabase_anon_key: string | null;
+  share_realtime_enabled: boolean;
   created_at: string;
 }
 

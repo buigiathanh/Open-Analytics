@@ -15,7 +15,7 @@ const SITE_TRACKER = {
 } as const;
 
 /** Path prefixes where the marketing-site tracker must not run (dashboard). */
-const TRACKER_EXCLUDE_PATHS = ["/app"];
+const TRACKER_EXCLUDE_PATHS = ["/app", "/share"];
 
 function isTrackerExcludedPath(pathname: string): boolean {
   return TRACKER_EXCLUDE_PATHS.some(
