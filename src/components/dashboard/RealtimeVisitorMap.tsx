@@ -22,10 +22,15 @@ const STATUS_RING: Record<VisitorStatusColor, string> = {
   white: "#ffffff",
 };
 
-function buildAvatarIcon(visitor: GlobeVisitor, selected: boolean) {
+function buildAvatarIcon(
+  visitor: GlobeVisitor,
+  selected: boolean,
+  isDark: boolean
+) {
   const status = visitorStatusColor(visitor.id);
   const size = selected ? 56 : 44;
   const ring = STATUS_RING[status];
+  const bg = isDark ? "#27272a" : "#f4f4f5";
   const ringStyle = selected
     ? `box-shadow:0 0 0 2px ${ring},0 0 0 4px #fff,0 4px 14px rgba(0,0,0,0.35)`
     : "box-shadow:0 2px 10px rgba(0,0,0,0.28)";
@@ -34,7 +39,7 @@ function buildAvatarIcon(visitor: GlobeVisitor, selected: boolean) {
     className: "oa-avatar-leaflet-icon",
     html: `<div class="oa-avatar-marker-pin" style="width:${size}px;height:${size}px">
       <img src="${visitor.avatar.replace(/"/g, "&quot;")}" alt="" width="${size}" height="${size}"
-        style="width:100%;height:100%;border-radius:50%;border:2px solid #fff;object-fit:cover;${ringStyle};transition:width 0.2s,height 0.2s,box-shadow 0.2s" />
+        style="width:100%;height:100%;border-radius:50%;border:2px solid #fff;background-color:${bg};object-fit:cover;${ringStyle};transition:width 0.2s,height 0.2s,box-shadow 0.2s,background-color 0.2s" />
     </div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
@@ -109,16 +114,18 @@ function InitialBounds({ visitors }: { visitors: GlobeVisitor[] }) {
 function AvatarMarker({
   visitor,
   selected,
+  isDark,
   onSelect,
 }: {
   visitor: GlobeVisitor;
   selected: boolean;
+  isDark: boolean;
   onSelect: (id: string) => void;
 }) {
   const markerRef = useRef<L.Marker | null>(null);
   const icon = useMemo(
-    () => buildAvatarIcon(visitor, selected),
-    [visitor, selected]
+    () => buildAvatarIcon(visitor, selected, isDark),
+    [visitor, selected, isDark]
   );
 
   useEffect(() => {
@@ -231,6 +238,7 @@ export function RealtimeVisitorMap({
             key={v.id}
             visitor={v}
             selected={selectedVisitorId === v.id}
+            isDark={isDark}
             onSelect={onSelectedVisitorChange}
           />
         ))}

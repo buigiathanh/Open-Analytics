@@ -50,6 +50,8 @@ export interface DashboardAnalytics {
   browsers: BreakdownRow[];
   devices: BreakdownRow[];
   platforms: BreakdownRow[];
+  languages: BreakdownRow[];
+  screens: BreakdownRow[];
   utmSources: BreakdownRow[];
   utmCampaigns: BreakdownRow[];
   liveCount: number;
@@ -307,6 +309,33 @@ export function buildPlatformBreakdown(events: AnalyticsEvent[]): BreakdownRow[]
   );
 }
 
+function buildVisitorStringBreakdown(
+  events: AnalyticsEvent[],
+  pick: (e: AnalyticsEvent) => string | null
+): BreakdownRow[] {
+  const pv = pageviews(events);
+  const byVisitor = new Map<string, string>();
+  for (const e of pv) {
+    if (!byVisitor.has(e.visitor_id)) {
+      const raw = pick(e)?.trim();
+      byVisitor.set(e.visitor_id, raw || "Unknown");
+    }
+  }
+  const items = Array.from(byVisitor.values()).map((label) => ({
+    key: label,
+    label,
+  }));
+  return aggregateCounts(items, items.length);
+}
+
+export function buildLanguageBreakdown(events: AnalyticsEvent[]): BreakdownRow[] {
+  return buildVisitorStringBreakdown(events, (e) => e.language);
+}
+
+export function buildScreenBreakdown(events: AnalyticsEvent[]): BreakdownRow[] {
+  return buildVisitorStringBreakdown(events, (e) => e.screen);
+}
+
 export function buildUtmSourceBreakdown(events: AnalyticsEvent[]): BreakdownRow[] {
   const pv = pageviews(events).filter((e) => e.utm_source?.trim());
   const items = pv.map((e) => {
@@ -396,6 +425,8 @@ export function buildDashboardAnalytics(
     browsers: buildBrowserBreakdown(current),
     devices: buildDeviceBreakdown(current),
     platforms: buildPlatformBreakdown(current),
+    languages: buildLanguageBreakdown(current),
+    screens: buildScreenBreakdown(current),
     utmSources: buildUtmSourceBreakdown(current),
     utmCampaigns: buildUtmCampaignBreakdown(current),
     liveCount: live.length,

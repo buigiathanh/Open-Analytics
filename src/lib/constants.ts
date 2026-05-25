@@ -5,7 +5,7 @@ export const DEFAULT_GEO_API_URL = "https://analytics.gitopen.dev/api/geo";
 
 /** Live realtime demo on the marketing homepage (public share link). */
 export const DEMO_SHARE_REALTIME_URL =
-  "https://analytics.gitopen.dev/share/35db12b6-8921-4419-8bad-1c6518449ab4/realtime?theme=light&map=globe";
+  "https://analytics.gitopen.dev/share/35db12b6-8921-4419-8bad-1c6518449ab4/realtime?theme=light&map=2d";
 
 /** Numeric enums — must match public/tracker.js */
 

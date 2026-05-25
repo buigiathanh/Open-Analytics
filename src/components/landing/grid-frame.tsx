@@ -1,5 +1,59 @@
 import { cn } from "@/lib/utils";
 
+const gridMarkerClass =
+  "pointer-events-none absolute z-10 size-[7px] border border-zinc-200 bg-background dark:border-zinc-700";
+
+/** Corner squares aligned to a grid cell (works with uneven column widths / row heights). */
+export function CellCornerMarkers({
+  row,
+  col,
+  rowCount,
+  colCount,
+}: {
+  row: number;
+  col: number;
+  rowCount: number;
+  colCount: number;
+}) {
+  const lastRow = rowCount - 1;
+  const lastCol = colCount - 1;
+
+  return (
+    <>
+      <span
+        className={cn(
+          gridMarkerClass,
+          "left-0 top-0 -translate-x-1/2 -translate-y-1/2"
+        )}
+      />
+      {col === lastCol && (
+        <span
+          className={cn(
+            gridMarkerClass,
+            "right-0 top-0 translate-x-1/2 -translate-y-1/2"
+          )}
+        />
+      )}
+      {row === lastRow && (
+        <span
+          className={cn(
+            gridMarkerClass,
+            "left-0 bottom-0 -translate-x-1/2 translate-y-1/2"
+          )}
+        />
+      )}
+      {row === lastRow && col === lastCol && (
+        <span
+          className={cn(
+            gridMarkerClass,
+            "right-0 bottom-0 translate-x-1/2 translate-y-1/2"
+          )}
+        />
+      )}
+    </>
+  );
+}
+
 function buildGridPoints(columns: number, rows: number) {
   const xSteps = Array.from(
     { length: columns + 1 },

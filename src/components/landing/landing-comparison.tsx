@@ -3,7 +3,10 @@
 import { Check, Minus } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { GridMarkers, OuterCornerMarkers } from "@/components/landing/grid-frame";
+import {
+  CellCornerMarkers,
+  OuterCornerMarkers,
+} from "@/components/landing/grid-frame";
 import { landingBody, landingEyebrow } from "@/components/landing/landing-typography";
 import { cn } from "@/lib/utils";
 
@@ -159,13 +162,19 @@ function ComparisonCell({
   return (
     <div
       className={cn(
-        "flex min-w-0 items-center border-zinc-200 px-4 py-3.5 sm:px-6 sm:py-4 dark:border-zinc-800",
+        "relative flex min-w-0 items-center border-zinc-200 px-4 py-3.5 sm:px-6 sm:py-4 dark:border-zinc-800",
         row < rowCount - 1 && "border-b",
         col < COL_COUNT - 1 && "border-r",
         isHeader && "bg-zinc-50/50 dark:bg-zinc-900/50",
         className
       )}
     >
+      <CellCornerMarkers
+        row={row}
+        col={col}
+        rowCount={rowCount}
+        colCount={COL_COUNT}
+      />
       {children}
     </div>
   );
@@ -180,9 +189,7 @@ function ComparisonTable({ config }: { config: CompetitorConfig }) {
         {config.tagline}
       </p>
 
-      <div className="relative">
-        <GridMarkers columns={COL_COUNT} rows={totalRows} />
-        <div className="grid w-full grid-cols-[1.4fr_1fr_1fr]">
+      <div className="grid w-full grid-cols-[1.4fr_1fr_1fr]">
           <ComparisonCell row={0} col={0} rowCount={totalRows} isHeader>
             <span className="text-sm font-medium text-muted-foreground">
               Criteria
@@ -239,7 +246,6 @@ function ComparisonTable({ config }: { config: CompetitorConfig }) {
               </div>
             );
           })}
-        </div>
       </div>
 
       <p className={`border-t border-zinc-200 px-4 py-3 text-center dark:border-zinc-800 sm:px-6 ${landingBody}`}>

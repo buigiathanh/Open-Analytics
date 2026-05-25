@@ -64,7 +64,7 @@ export function visitorDisplayName(visitorId: string): string {
 /** Cartoon-style avatar (Dicebear adventurer) — stable per visitor */
 export function visitorAvatarUrl(visitorId: string, size = 80): string {
   const seed = encodeURIComponent(visitorId);
-  return `https://api.dicebear.com/9.x/adventurer/png?seed=${seed}&size=${size}`;
+  return `https://api.dicebear.com/9.x/micah/png?seed=${seed}&size=${size}`;
 }
 
 export type VisitorStatusColor = "blue" | "red" | "emerald" | "white";

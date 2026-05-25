@@ -83,6 +83,8 @@ export function SiteDashboard({ site, analytics }: SiteDashboardProps) {
             { id: "browser", label: "Browser", rows: analytics.browsers },
             { id: "device", label: "Device", rows: analytics.devices },
             { id: "platform", label: "OS", rows: analytics.platforms },
+            { id: "language", label: "Language", rows: analytics.languages },
+            { id: "screen", label: "Screen", rows: analytics.screens },
           ]}
         />
       </div>
