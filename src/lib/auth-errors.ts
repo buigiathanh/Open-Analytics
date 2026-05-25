@@ -64,6 +64,8 @@ export function authErrorFromOAuthCallback(
 
 export const AUTH_SETUP_DOCS_PATH = "/docs/auth";
 
+import { getAppOrigin } from "@/lib/app-origin";
+
 /** Short message for login UI; full steps are on /docs/auth */
 export function authErrorSummary(params: URLSearchParams): string | null {
   const code = authErrorMessage(params);
@@ -94,7 +96,7 @@ export function authErrorMessage(params: URLSearchParams): string | null {
     case "no_code":
       return (
         "No authorization code returned. Add this URL to Supabase Redirect URLs: " +
-        `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`
+        `${getAppOrigin()}/auth/callback`
       );
     case "exchange":
       return (

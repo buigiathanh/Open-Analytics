@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { resolveAppOrigin } from "@/lib/app-origin";
 import { authErrorFromOAuthCallback } from "@/lib/auth-errors";
 
 function safeNextPath(next: string | null): string {
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const next = safeNextPath(requestUrl.searchParams.get("next"));
-  const origin = requestUrl.origin;
+  const origin = resolveAppOrigin(requestUrl.origin);
 
   const oauthFailure = authErrorFromOAuthCallback(requestUrl.searchParams);
   if (oauthFailure) {

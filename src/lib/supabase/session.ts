@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveAppOrigin } from "@/lib/app-origin";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -37,8 +38,7 @@ export async function updateSession(request: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/";
+    const loginUrl = new URL("/", resolveAppOrigin(request.nextUrl.origin));
     loginUrl.searchParams.set("login", "1");
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
