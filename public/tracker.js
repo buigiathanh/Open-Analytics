@@ -493,20 +493,42 @@
       fetchGeoIp(cfg, callback);
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        applyGeoResult({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          country_code: geoCache.country_code,
+
+    function useGps() {
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          applyGeoResult({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            country_code: geoCache.country_code,
+          });
+          callback(geoCache);
+        },
+        function () {
+          fetchGeoIp(cfg, callback);
+        },
+        { timeout: 4000, maximumAge: GEO_GPS_MAX_AGE_MS }
+      );
+    }
+
+    // Only use GPS when permission is already granted — never trigger the browser prompt.
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then(function (result) {
+          if (result.state === "granted") {
+            useGps();
+          } else {
+            fetchGeoIp(cfg, callback);
+          }
+        })
+        .catch(function () {
+          fetchGeoIp(cfg, callback);
         });
-        callback(geoCache);
-      },
-      function () {
-        fetchGeoIp(cfg, callback);
-      },
-      { timeout: 4000, maximumAge: GEO_GPS_MAX_AGE_MS }
-    );
+      return;
+    }
+
+    fetchGeoIp(cfg, callback);
   }
 
   function refreshGeo(cfg, callback) {
