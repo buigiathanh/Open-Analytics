@@ -1,0 +1,7 @@
+-- Open Analytics — choose one file per new Supabase project:
+--
+--   schema-app.sql        → app in .env (sign-in, projects)
+--   schema-analytics.sql  → your tracking DB (events only)
+--
+-- New project, never run SQL before: open the matching file and run it once in SQL Editor.
+-- Optional: same Supabase for both → run schema-app.sql, then schema-analytics.sql.
