@@ -1,6 +1,5 @@
 import { DashboardPreview } from "@/components/landing/dashboard-preview";
 import { LandingComparison } from "@/components/landing/landing-comparison";
-import { GithubActivity } from "@/components/landing/github-activity";
 import { LandingFAQ } from "@/components/landing/landing-faq";
 import { LandingFeatures } from "@/components/landing/landing-features";
 import { LandingFinalCTA } from "@/components/landing/landing-final-cta";
@@ -22,7 +21,6 @@ export default function HomePage() {
         <LandingHowItWorks />
         <LandingComparison />
         <LandingFAQ />
-        <GithubActivity />
         <LandingFinalCTA />
       </main>
       <LandingFooter />

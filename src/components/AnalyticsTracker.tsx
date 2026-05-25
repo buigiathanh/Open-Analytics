@@ -8,7 +8,7 @@ import {
 
 /** Self-tracking for the marketing site (hardcoded). */
 const SITE_TRACKER = {
-  siteKey: "50b063be22a069cb60de97f8",
+  siteKey: "1b7033b1c695f1278e855e09",
   supabaseUrl: "https://ikmhedkpkmlvwzvpallv.supabase.co",
   supabaseKey: "sb_publishable_bb14p_yxKsod25f6qHLDMQ_x9XguqDD",
   scriptUrl: DEFAULT_TRACKER_SCRIPT_URL,
