@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/Logo";
+import { GITHUB_REPO_URL } from "@/lib/github";
 
 export function LandingFooter() {
   return (
@@ -18,7 +19,12 @@ export function LandingFooter() {
             <Link href="/#faq" className="hover:text-foreground">
               FAQ
             </Link>
-            <Link href="/#github" className="hover:text-foreground">
+            <Link
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground"
+            >
               GitHub
             </Link>
             <Link href="/app" className="hover:text-foreground">
