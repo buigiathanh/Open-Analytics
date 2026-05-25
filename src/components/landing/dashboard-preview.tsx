@@ -26,7 +26,7 @@ export function DashboardPreview() {
               <iframe
                 src={DEMO_SHARE_REALTIME_URL}
                 title="Open Analytics live realtime demo"
-                className="block h-[min(72vh,560px)] w-full border-0 bg-zinc-100 sm:h-[520px]"
+                className="block h-[min(85vh,720px)] w-full border-0 bg-zinc-100 sm:h-[680px]"
                 loading="lazy"
                 allowFullScreen
               />

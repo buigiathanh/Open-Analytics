@@ -468,7 +468,12 @@ export function getLiveFeed(
 
 export function liveBreakdownBy(
   feed: LiveFeedItem[],
-  pick: (e: LiveFeedItem) => { key: string; label: string; icon?: string }
+  pick: (e: LiveFeedItem) => {
+    key: string;
+    label: string;
+    icon?: string;
+    iconUrl?: string;
+  }
 ): BreakdownRow[] {
   const items = feed.map(pick);
   return aggregateCounts(items, items.length).slice(0, 6);

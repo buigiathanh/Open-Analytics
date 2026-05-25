@@ -24,6 +24,7 @@ import {
   XAxis,
 } from "recharts";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ICON_GLOBE } from "@/lib/breakdown-icons";
 import { visitorStatusColor } from "@/lib/visitor-identity";
 import type { BreakdownRow } from "@/lib/analytics";
 import type { LiveFeedItem } from "@/lib/analytics";
@@ -51,42 +52,63 @@ const STATUS_DOT: Record<string, string> = {
   white: "bg-white",
 };
 
-function BreakdownList({
+function BreakdownHorizontalRow({
   title,
   rows,
   showFlag,
+  showDeviceIcon,
 }: {
   title: string;
   rows: BreakdownRow[];
   showFlag?: boolean;
+  showDeviceIcon?: boolean;
 }) {
   return (
-    <div>
-      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+    <div className="flex min-w-0 items-center gap-2">
+      <p className="shrink-0 pr-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 w-[80px]">
         {title}
       </p>
-      <ul className="space-y-1">
+      <div className="scrollbar-hide flex min-w-0 flex-1 gap-1.5 overflow-x-auto overflow-y-hidden">
         {rows.length === 0 ? (
-          <li className="text-xs text-zinc-400 dark:text-zinc-500">—</li>
+          <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">—</span>
         ) : (
           rows.map((r) => (
-            <li
+            <span
               key={r.key}
-              className="flex items-center justify-between gap-2 text-xs text-zinc-700 dark:text-zinc-200"
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-zinc-200/90 bg-zinc-100 px-2 py-0.5 text-xs text-zinc-800 dark:border-zinc-600 dark:bg-zinc-800/90 dark:text-zinc-100"
             >
-              <span className="flex min-w-0 items-center gap-1.5 truncate">
-                {showFlag && (
-                  <span className="shrink-0 text-sm">{r.icon}</span>
-                )}
-                <span className="truncate">{r.label}</span>
+              {showFlag && r.iconUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={r.iconUrl}
+                  alt=""
+                  width={16}
+                  height={12}
+                  className="h-3 w-4 shrink-0 rounded-[1px] object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (img.dataset.fallback === "1") return;
+                    img.dataset.fallback = "1";
+                    img.src = ICON_GLOBE;
+                  }}
+                />
+              ) : null}
+              {showDeviceIcon ? (
+                r.label.toLowerCase().includes("mobile") ? (
+                  <Smartphone className="size-3 text-zinc-400 dark:text-zinc-500" />
+                ) : (
+                  <Monitor className="size-3 text-zinc-400 dark:text-zinc-500" />
+                )
+              ) : null}
+              <span className="max-w-[8rem] truncate">{r.label}</span>
+              <span className="tabular-nums text-zinc-500 dark:text-zinc-400">
+                ({r.count})
               </span>
-              <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">
-                {r.count}
-              </span>
-            </li>
+            </span>
           ))
         )}
-      </ul>
+      </div>
     </div>
   );
 }
@@ -470,45 +492,22 @@ export function RealtimeOverlay({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3 border-t border-zinc-200/80 pt-3 dark:border-white/10">
-          <BreakdownList title="Referrers" rows={referrers} />
-          <BreakdownList title="Countries" rows={countries} showFlag />
-          <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Devices
-            </p>
-            <ul className="space-y-1 text-xs text-zinc-700 dark:text-zinc-200">
-              {devices.length === 0 ? (
-                <li className="text-zinc-400 dark:text-zinc-500">—</li>
-              ) : (
-                devices.map((d) => (
-                  <li
-                    key={d.key}
-                    className="flex items-center justify-between gap-1"
-                  >
-                    <span className="flex items-center gap-1 truncate">
-                      {d.label.toLowerCase().includes("mobile") ? (
-                        <Smartphone className="size-3 text-zinc-400 dark:text-zinc-500" />
-                      ) : (
-                        <Monitor className="size-3 text-zinc-400 dark:text-zinc-500" />
-                      )}
-                      {d.label}
-                    </span>
-                    <span className="text-zinc-500 dark:text-zinc-400">{d.count}</span>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
+        <div className="mt-4 space-y-2.5 border-t border-zinc-200/80 pt-3 dark:border-white/10">
+          <BreakdownHorizontalRow title="Referrers" rows={referrers} />
+          <BreakdownHorizontalRow title="Countries" rows={countries} showFlag />
+          <BreakdownHorizontalRow
+            title="Devices"
+            rows={devices}
+            showDeviceIcon
+          />
         </div>
       </div>
 
-      <div className="flex-1" />
-
-      <div
-        className={`pointer-events-auto max-h-[38vh] w-full max-w-[350px] overflow-hidden ${GLASS}`}
-      >
-        <ul className="max-h-[38vh] overflow-y-auto p-2">
+      <div className="pointer-events-none absolute bottom-3 left-3 z-10 w-full max-w-[min(100%,380px)] sm:bottom-5 sm:left-5">
+        <div
+          className={`pointer-events-auto max-h-[250px] w-full overflow-hidden ${GLASS}`}
+        >
+          <ul className="scrollbar-hide max-h-[250px] overflow-y-auto p-2">
           {feed.length === 0 ? (
             <li className="px-2 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
               No activity in the last 5 minutes
@@ -573,6 +572,7 @@ export function RealtimeOverlay({
             })
           )}
         </ul>
+        </div>
       </div>
 
       <p className="pointer-events-none absolute bottom-4 right-4 text-[10px] text-zinc-400 dark:text-zinc-500">

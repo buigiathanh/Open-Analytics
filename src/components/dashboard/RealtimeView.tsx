@@ -15,7 +15,8 @@ import {
   getLiveFeed,
   liveBreakdownBy,
 } from "@/lib/analytics";
-import { countryFlag, countryName, referrerHost } from "@/lib/countries";
+import { countryFlagUrl } from "@/lib/breakdown-icons";
+import { countryName, referrerHost } from "@/lib/countries";
 import { DEVICE_LABEL } from "@/lib/constants";
 import { liveFeedToGlobeVisitors } from "@/lib/live-to-globe";
 import {
@@ -202,7 +203,7 @@ function RealtimeViewInner({
   const countries = liveBreakdownBy(feed, (e) => ({
     key: e.country_code || "??",
     label: countryName(e.country_code),
-    icon: countryFlag(e.country_code),
+    iconUrl: countryFlagUrl(e.country_code),
   }));
   const devices = liveBreakdownBy(feed, (e) => ({
     key: String(e.device ?? 0),
