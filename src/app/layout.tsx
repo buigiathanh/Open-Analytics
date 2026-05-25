@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AnalyticsTrackerBoundary } from "@/components/AnalyticsTrackerBoundary";
 import { AuthProviderBoundary } from "@/components/auth/AuthProviderBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <AuthProviderBoundary>{children}</AuthProviderBoundary>
+          <AnalyticsTrackerBoundary />
         </ThemeProvider>
       </body>
     </html>
