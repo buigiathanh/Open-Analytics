@@ -3,6 +3,10 @@ export const DEFAULT_TRACKER_SCRIPT_URL =
   "https://analytics.gitopen.dev/tracker.js";
 export const DEFAULT_GEO_API_URL = "https://analytics.gitopen.dev/api/geo";
 
+/** Live realtime demo on the marketing homepage (public share link). */
+export const DEMO_SHARE_REALTIME_URL =
+  "https://analytics.gitopen.dev/share/35db12b6-8921-4419-8bad-1c6518449ab4/realtime?theme=light&map=globe";
+
 /** Numeric enums — must match public/tracker.js */
 
 export const EVENT_TYPE = {
