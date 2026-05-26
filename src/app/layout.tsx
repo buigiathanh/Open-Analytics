@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "Open Analytics — Privacy-friendly web analytics",
   description:
     "Open-source website analytics with Supabase. Track page views, visitors, and realtime activity.",
+  verification: {
+    google: "ftqr17ghZJoATvEQ4K6vuyaR9DWGxBy-MGKg3Ouof00",
+  },
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
     apple: [{ url: "/logo.png", type: "image/png" }],
