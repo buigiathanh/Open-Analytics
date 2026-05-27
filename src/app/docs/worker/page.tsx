@@ -1,4 +1,12 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { DocsCopyBlock } from "@/components/docs/DocsCopyBlock";
 import { DocsLead, DocsProse } from "@/components/docs/DocsProse";
+
+const WORKER_SOURCE = readFileSync(
+  join(process.cwd(), "public/worker.js"),
+  "utf8"
+);
 
 export default function DocsWorkerPage() {
   return (
@@ -82,6 +90,14 @@ Dashboard / Realtime ── Publishable key ──►  Supabase events (select o
         Optional: adjust <code>RATE_LIMIT</code> (requests per IP) and{" "}
         <code>WINDOW</code> (milliseconds).
       </p>
+
+      <h3>Full source (<code>public/worker.js</code>)</h3>
+      <p>
+        Copy the script below into your Cloudflare Worker. Replace{" "}
+        <code>SUPABASE_PROJECT_ID</code> and <code>SUPABASE_SECRET_KEY</code> at the top
+        before deploying.
+      </p>
+      <DocsCopyBlock code={WORKER_SOURCE} />
 
       <h2>3. Deploy on Cloudflare</h2>
       <ol>
