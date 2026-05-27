@@ -90,8 +90,6 @@ export function AddWebsiteModal({ open, onClose }: AddWebsiteModalProps) {
     created &&
     buildTrackerSnippet({
       siteKey: created.site_key,
-      supabaseUrl: created.supabase_url,
-      supabaseAnonKey: created.supabase_anon_key,
     });
 
   function goToStep2() {
@@ -367,9 +365,10 @@ export function AddWebsiteModal({ open, onClose }: AddWebsiteModalProps) {
                     </li>
                   </ol>
                   <p className="text-xs text-zinc-500">
-                    Optional — live visitor map: <strong>Database</strong> →{" "}
-                    <strong>Publications</strong> → <strong>supabase_realtime</strong> → enable{" "}
-                    <strong>events</strong>.
+                    RLS allows read-only access with the publishable key. The worker inserts
+                    events with your Supabase Secret key. Optional — live map:{" "}
+                    <strong>Database</strong> → <strong>Publications</strong> →{" "}
+                    <strong>supabase_realtime</strong> → enable <strong>events</strong>.
                   </p>
                 </>
               }
@@ -409,6 +408,13 @@ export function AddWebsiteModal({ open, onClose }: AddWebsiteModalProps) {
                     Analytics.
                   </p>
                   <ol className="list-decimal space-y-2 pl-4 text-zinc-600 dark:text-zinc-300">
+                    <li>
+                      Deploy <code>public/worker.js</code> to Cloudflare (
+                      <a href="/docs/worker" className="text-emerald-600 hover:underline">
+                        setup guide
+                      </a>
+                      ) and set <code>NEXT_PUBLIC_TRACKER_ENDPOINT</code> to your worker URL.
+                    </li>
                     <li>Copy the embed code on the right.</li>
                     <li>
                       Paste it before{" "}

@@ -2,16 +2,13 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
-import {
-  DEFAULT_TRACKER_SCRIPT_URL,
-} from "@/lib/constants";
+import { DEFAULT_TRACKER_SCRIPT_URL } from "@/lib/constants";
 
 /** Self-tracking for the marketing site (hardcoded). */
 const SITE_TRACKER = {
   siteKey: "1b7033b1c695f1278e855e09",
-  supabaseUrl: "https://ikmhedkpkmlvwzvpallv.supabase.co",
-  supabaseKey: "sb_publishable_bb14p_yxKsod25f6qHLDMQ_x9XguqDD",
   scriptUrl: DEFAULT_TRACKER_SCRIPT_URL,
+  endpoint: "https://openanalytics.buigiathanh2802.workers.dev",
 } as const;
 
 /** Path prefixes where the marketing-site tracker must not run (dashboard). */
@@ -34,8 +31,7 @@ export function AnalyticsTracker() {
       strategy="afterInteractive"
       src={SITE_TRACKER.scriptUrl}
       data-site-key={SITE_TRACKER.siteKey}
-      data-supabase-url={SITE_TRACKER.supabaseUrl}
-      data-supabase-key={SITE_TRACKER.supabaseKey}
+      data-endpoint={SITE_TRACKER.endpoint}
     />
   );
 }

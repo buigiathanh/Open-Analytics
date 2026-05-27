@@ -44,8 +44,9 @@ export default function DocsSupabasePage() {
           <code>events</code>.
         </li>
         <li>
-          Copy Project URL + Publishable key into <strong>Add website</strong> and into{" "}
-          <code>tracker.js</code>.
+          Copy Project URL + Publishable key into <strong>Add website</strong> (dashboard reads
+          only). Deploy the worker from <a href="/docs/worker">Cloudflare Worker setup</a> for
+          ingest.
         </li>
       </ol>
 
@@ -62,8 +63,9 @@ export default function DocsSupabasePage() {
           <code>projects</code>.
         </li>
         <li>
-          <strong>Analytics project</strong>: anon insert/select on <code>events</code> (tracker +
-          dashboard reads). <code>site_key</code> must match a row in app <code>projects</code>.
+          <strong>Analytics project</strong>: publishable key has <strong>select only</strong> on{" "}
+          <code>events</code> (dashboard + Realtime). Event inserts use the Secret key via a{" "}
+          <a href="/docs/worker">Cloudflare Worker</a> (or your own proxy) — not from the browser.
         </li>
       </ul>
 

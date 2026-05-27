@@ -15,7 +15,8 @@
 | # | Component | Path | Purpose |
 |---|-----------|------|---------|
 | **1** | **Analytics dashboard** (management app) | [`src/`](src/) · [`supabase/schema-app.sql`](supabase/schema-app.sql) | Next.js app: sign-in, register websites, view stats, realtime map, built-in docs |
-| **2** | **Tracking script** | [`public/tracker.js`](public/tracker.js) | Standalone browser script: sends pageviews & events **directly** to a Supabase project (or custom API) |
+| **2** | **Tracking script** | [`public/tracker.js`](public/tracker.js) | Standalone browser script: POSTs pageviews & events to a **Cloudflare Worker** (or custom API) |
+| **3** | **Ingest worker** | [`public/worker.js`](public/worker.js) | Edge proxy: validates payloads, rate-limits, inserts into Supabase with the Secret key |
 
 ```text
   ┌──────────────────────────────┐         ┌──────────────────────────────┐
@@ -23,19 +24,26 @@
   │     Next.js open-source UI    │         │     embed on your website    │
   │     • Sign-in                 │         │     • POST events            │
   │     • Add site + copy snippet │         │     • vanilla JS, one file   │
-  │     • Charts & realtime       │         │                              │
-  └──────────────┬───────────────┘         └──────────────┬───────────────┘
-                 │ reads via stored creds                    │ writes events
-                 ▼                                           ▼
-        ┌────────────────┐                          ┌────────────────┐
-        │ App Supabase   │                          │ YOUR Supabase  │
-        │ (.env)         │                          │ (per website)  │
-        │ profiles,      │                          │ events only    │
-        │ projects       │                          │ (tracking)     │
-        └────────────────┘                          └────────────────┘
+  │     • Charts & realtime       │         └──────────────┬───────────────┘
+  └──────────────┬───────────────┘                        │ data-endpoint
+                 │ reads (publishable key)                  ▼
+                 ▼                          ┌──────────────────────────────┐
+        ┌────────────────┐                  │  3. Cloudflare Worker        │
+        │ App Supabase   │                  │     public/worker.js         │
+        │ (.env)         │                  │     • rate limit             │
+        │ profiles,      │                  │     • Secret key → insert    │
+        │ projects       │                  └──────────────┬───────────────┘
+        └────────────────┘                                 ▼
+                                                  ┌────────────────┐
+                                                  │ YOUR Supabase  │
+                                                  │ events (RLS:   │
+                                                  │ select only    │
+                                                  │ for publishable│
+                                                  │ key)           │
+                                                  └────────────────┘
 ```
 
-- **Your analytics data stays in your Supabase** — run [`schema-analytics.sql`](supabase/schema-analytics.sql), put Project ID + publishable key in `tracker.js` and **Add website**.
+- **Your analytics data stays in your Supabase** — run [`schema-analytics.sql`](supabase/schema-analytics.sql) (publishable key = read-only), deploy [`worker.js`](public/worker.js) to Cloudflare for writes, put Project ID + publishable key in **Add website**.
 - **App Supabase (`.env`)** — only for hosting this dashboard: sign-in and a list of sites (name, domain, link to your project URL + key). No pageviews are stored there.
 - **You can use `tracker.js` without the dashboard** — if you have `sites` + `events` and a `site_key`, events still land in your project.
 
@@ -114,8 +122,9 @@ For each site you track:
 1. Create **your** Supabase project (you own the data).
 2. Run [`supabase/schema-analytics.sql`](supabase/schema-analytics.sql) once on that project (copy blocks in Add website).
 3. Enable **Realtime** on `events` if you use the live map.
-4. In **Add website**, enter name, domain, **your Project ID**, and **your Publishable key** (same key as in `tracker.js`).
-5. Open **Setup** (`/app/[siteId]/setup`) and copy the `<script>` tag.
+4. In **Add website**, enter name, domain, **your Project ID**, and **your Publishable key** (dashboard reads only).
+5. Deploy [`public/worker.js`](public/worker.js) to Cloudflare — see `/docs/worker` when the app is running.
+6. Open **Setup** (`/app/[siteId]/setup`) and copy the `<script>` tag with `data-endpoint` set to your worker URL.
 
 **Optional — one Supabase project**
 
@@ -135,18 +144,21 @@ OAuth redirect URLs must include `https://your-domain.com/auth/callback` (see `.
 
 ## Part 2 — Tracking script (`public/tracker.js`)
 
-[`public/tracker.js`](public/tracker.js) is a **single vanilla JavaScript file** (~770 lines, no build step). It runs in the visitor’s browser and sends analytics to **your** Supabase (default) or a custom HTTP endpoint.
+[`public/tracker.js`](public/tracker.js) is a **single vanilla JavaScript file** (~770 lines, no build step). It runs in the visitor’s browser and POSTs analytics to your **Cloudflare Worker** (recommended) or another HTTP endpoint. The worker inserts into Supabase with the Secret key.
+
+[`public/worker.js`](public/worker.js) is the reference ingest proxy: rate limiting, payload checks, and Supabase insert. See **Cloudflare Worker** docs at `/docs/worker`.
 
 ### What you need before embedding
 
 | Requirement | Notes |
 |-------------|--------|
-| Supabase project | Run [`supabase/schema-analytics.sql`](supabase/schema-analytics.sql) (`events` table only) |
+| Supabase project | Run [`supabase/schema-analytics.sql`](supabase/schema-analytics.sql) — publishable key can **select** only |
+| Cloudflare Worker | Deploy [`public/worker.js`](public/worker.js) with your Secret key |
 | `site_key` | Generated when you **Add website** in the app (stored in `projects`) |
-| Embed | Pass `site_key` as `data-site-key` on the script tag |
-| Supabase URL + anon key | Tracker project credentials (`data-supabase-url`, `data-supabase-key`) |
+| Embed | `data-site-key` + `data-endpoint` (worker URL) on the script tag |
+| Publishable key | Stored in the app for dashboard reads — not required in the embed for writes |
 
-The dashboard **does not** receive event payloads; the browser talks to the tracker Supabase project (or `data-endpoint`) only.
+The dashboard **does not** receive event payloads; the browser POSTs to the worker, which writes to your Supabase project.
 
 ### How to load the script
 
@@ -156,13 +168,14 @@ Deploy Part 1 and point `src` at your origin:
 
 ```html
 <script
-  src="https://your-dashboard.com/tracker.js"
+  src="https://your-dashboard.com/tracker.js?v=1.0.1"
   data-site-key="YOUR_SITE_KEY"
-  data-supabase-url="https://YOUR_TRACKER_PROJECT.supabase.co"
-  data-supabase-key="YOUR_TRACKER_ANON_KEY"
+  data-endpoint="https://your-worker.workers.dev"
   data-geo-url="https://your-dashboard.com/api/geo"
 ></script>
 ```
+
+Append `?v=1.0.1` to the script URL and bump the version when you redeploy `tracker.js` (see `TRACKER_SCRIPT_VERSION` in `src/lib/constants.ts`).
 
 **Option B — Host `tracker.js` yourself**
 
@@ -170,10 +183,9 @@ Copy [`public/tracker.js`](public/tracker.js) to any static host (S3, Cloudflare
 
 ```html
 <script
-  src="https://cdn.example.com/tracker.js"
+  src="https://cdn.example.com/tracker.js?v=1.0.1"
   data-site-key="YOUR_SITE_KEY"
-  data-supabase-url="https://YOUR_TRACKER_PROJECT.supabase.co"
-  data-supabase-key="YOUR_TRACKER_ANON_KEY"
+  data-endpoint="https://your-worker.workers.dev"
 ></script>
 ```
 
@@ -185,15 +197,14 @@ Set options before loading the file:
 <script>
   window.OpenAnalytics = {
     siteKey: "YOUR_SITE_KEY",
-    supabaseUrl: "https://xxx.supabase.co",
-    supabaseKey: "YOUR_ANON_KEY",
+    endpoint: "https://your-worker.workers.dev",
     geoUrl: "https://your-app.com/api/geo",
     domains: "example.com,www.example.com",
     doNotTrack: false,
     autoTrack: true,
   };
 </script>
-<script src="https://your-host/tracker.js"></script>
+<script src="https://your-host/tracker.js?v=1.0.1"></script>
 ```
 
 ### Script attributes (`data-*`)
@@ -201,10 +212,10 @@ Set options before loading the file:
 | Attribute | Required | Description |
 |-----------|----------|-------------|
 | `data-site-key` | **Yes** | `site_key` from the app (Add website → Setup) |
-| `data-supabase-url` | Yes* | Tracker project URL (*unless `data-endpoint`) |
-| `data-supabase-key` | Yes* | Tracker project anon key (*unless `data-endpoint`) |
-| `data-endpoint` | No | POST JSON to your API instead of Supabase |
+| `data-endpoint` | **Yes** | Worker URL — POST JSON (see [`public/worker.js`](public/worker.js)) |
 | `data-geo-url` | No | Geo lookup URL (e.g. dashboard `/api/geo`); cached in `localStorage` |
+| `data-supabase-url` | No | Not needed when using `data-endpoint` |
+| `data-supabase-key` | No | Dashboard reads only; default RLS blocks anon inserts |
 | `data-domains` | No | Comma-separated hostnames to allow |
 | `data-do-not-track="true"` | No | Skip tracking when DNT is on |
 | `data-auto-track="false"` | No | No auto pageview; call `OpenAnalytics.trackPageview()` |
@@ -256,10 +267,11 @@ Attributes `data-oa-event-*` become properties on the custom event payload.
 
 ```text
 1. Deploy dashboard + app Supabase in .env (sign-in + site list only)
-2. Create YOUR Supabase per website + run schema-analytics.sql
-3. Sign in → Add website (your Project ID + publishable key)
-4. Paste tracker.js snippet on your site (same project + key)
-5. Events in YOUR Supabase → /app charts query your project with the stored key
+2. Create YOUR Supabase per website + run schema-analytics.sql (select-only RLS)
+3. Deploy public/worker.js to Cloudflare with Secret key
+4. Sign in → Add website (your Project ID + publishable key for dashboard reads)
+5. Paste tracker.js snippet with data-endpoint on your site
+6. Events in YOUR Supabase → /app charts query your project with the stored key
 ```
 
 You may skip step 1 and only run steps 2–4 if you only need collection and will query Supabase yourself.
@@ -286,6 +298,7 @@ See [`src/lib/constants.ts`](src/lib/constants.ts) and [`public/tracker.js`](pub
 |-------|------|
 | Installation | `/docs/installation` |
 | Supabase | `/docs/supabase` |
+| **Cloudflare Worker** | `/docs/worker` |
 | **Tracker** | `/docs/tracker` |
 | Metrics | `/docs/metrics` |
 | Dashboard UI | `/docs/dashboard` |
@@ -299,6 +312,7 @@ See [`src/lib/constants.ts`](src/lib/constants.ts) and [`public/tracker.js`](pub
 ```text
 public/
   tracker.js              # Part 2 — browser tracker (copy or serve as-is)
+  worker.js               # Part 3 — Cloudflare ingest proxy (Secret key)
 
 src/
   app/                    # Part 1 — Next.js routes (/, /app, /docs, /api/geo, …)
@@ -315,9 +329,9 @@ supabase/
 
 ## Security (production)
 
-- **App Supabase** (`.env`) — publishable key is public by design for OAuth; do not put your analytics **secret** keys in `.env` unless you add custom server features.
-- **Your analytics publishable key** is stored in the app DB and appears in the embed (`data-supabase-key`) — use `data-endpoint` + a proxy if you want to hide it.
-- Default RLS is permissive for demos — tighten before public traffic.
+- **App Supabase** (`.env`) — publishable key is public by design for OAuth; never expose analytics **Secret** keys in HTML or `tracker.js`.
+- **Your analytics publishable key** is stored in the app DB for dashboard reads. Event writes go through **Cloudflare Worker** (`data-endpoint`) with the Secret key.
+- Default RLS allows **select** only for the publishable role — deploy [`worker.js`](public/worker.js) before going live.
 - See `/docs/security` on a running instance.
 
 ---

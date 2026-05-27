@@ -36,7 +36,7 @@ const faqs: FaqItem[] = [
     id: "backend",
     question: "Do I need a separate tracking server?",
     answer:
-      "No. tracker.js sends directly to Supabase. In production, tighten RLS; you can proxy via API if you do not want to expose the anon key.",
+      "Deploy public/worker.js to Cloudflare. tracker.js POSTs to the worker; the worker inserts with your Supabase Secret key. The publishable key is read-only for the dashboard.",
   },
   {
     id: "spa",

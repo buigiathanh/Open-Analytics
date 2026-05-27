@@ -9,6 +9,11 @@ export const DOCS_NAV: DocsNavItem[] = [
   { title: "Installation", href: "/docs/installation", description: "Run the dashboard locally" },
   { title: "Sign-in setup", href: "/docs/auth", description: "Google & GitHub OAuth" },
   { title: "Supabase setup", href: "/docs/supabase", description: "Registry and per-site projects" },
+  {
+    title: "Cloudflare Worker",
+    href: "/docs/worker",
+    description: "Edge proxy for event ingest",
+  },
   { title: "Tracking script", href: "/docs/tracker", description: "Embed, options, and API" },
   { title: "Metrics", href: "/docs/metrics", description: "How numbers are calculated" },
   { title: "Dashboard", href: "/docs/dashboard", description: "Stats, breakdowns, realtime" },

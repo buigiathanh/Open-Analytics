@@ -49,10 +49,8 @@ create index events_site_key_visit_idx
 
 alter table public.events enable row level security;
 
-create policy "events_insert_anon"
-  on public.events for insert to anon
-  with check (true);
-
+-- Publishable (anon) key: read-only for dashboard / Realtime.
+-- Event inserts go through a server proxy (e.g. Cloudflare Worker) using the Secret key.
 create policy "events_select_anon"
   on public.events for select to anon
   using (true);`;

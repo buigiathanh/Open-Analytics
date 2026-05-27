@@ -1,6 +1,6 @@
 /**
  * Open Analytics — client-side tracker
- * Sends page views and events directly to Supabase (or a custom endpoint).
+ * Sends page views and events to a Cloudflare Worker (data-endpoint) or Supabase.
  *
  * Config via script tag attributes or window.OpenAnalytics before loading this file.
  *
@@ -645,17 +645,22 @@
   }
 
   function sendToEndpoint(endpoint, payload) {
-    return fetch(endpoint, {
+    // text/plain + no-cors: simple cross-origin POST (no preflight, no ACAO required).
+    var url = String(endpoint).replace(/\/$/, "");
+    return fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
       body: JSON.stringify(payload),
       keepalive: true,
-    }).then(function (res) {
-      if (res.ok) return res;
-      return res.text().then(function () {
-        throw new Error("post " + res.status);
+      mode: "no-cors",
+      credentials: "omit",
+    })
+      .then(function () {
+        return { ok: true };
+      })
+      .catch(function () {
+        return { ok: false };
       });
-    });
   }
 
   function trackingDisabled(cfg) {
@@ -755,12 +760,11 @@
   }
 
   function startTracking() {
-    initGeo(cfg, function () {
-      setupNetworkListeners(cfg);
-      setupSpaNavigation();
-      setupDeclarativeClicks();
-      if (cfg.autoTrack) trackPageview();
-    });
+    setupNetworkListeners(cfg);
+    setupSpaNavigation();
+    setupDeclarativeClicks();
+    if (cfg.autoTrack) trackPageview();
+    initGeo(cfg);
   }
 
   if (!trackingDisabled(cfg)) {

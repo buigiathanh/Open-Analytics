@@ -9,28 +9,26 @@ export default function DocsSecurityPage() {
         exposing a public instance, review these risks and mitigations.
       </DocsLead>
 
-      <h2>Supabase anon key in the browser</h2>
+      <h2>Publishable key in the browser</h2>
       <p>
-        The standard embed snippet includes the site project&apos;s <strong>anon key</strong>.
-        Anyone can read it from your page source. With default RLS, that key can:
+        The dashboard still needs your analytics project&apos;s <strong>publishable key</strong>{" "}
+        to read <code>events</code>. Default RLS allows <code>select</code> only — not{" "}
+        <code>insert</code>. Anyone who obtains the key can read all events for that project;
+        they cannot insert without the Secret key on your worker.
       </p>
-      <ul>
-        <li>Insert events for valid <code>site_key</code> values</li>
-        <li>Read all events (dashboard policy allows <code>select</code> for anon)</li>
-      </ul>
       <p>
         <strong>Mitigations:</strong>
       </p>
       <ul>
         <li>
-          Use <code>data-endpoint</code> and a server route that validates payloads instead of
-          exposing the publishable key in HTML.
+          Send events via <code>data-endpoint</code> and a{" "}
+          <a href="/docs/worker">Cloudflare Worker</a> that holds the Secret key.
         </li>
         <li>
-          Tighten RLS: remove broad <code>select</code> for anon; authenticate dashboard
-          users and use user-scoped policies.
+          Tighten RLS further: remove broad <code>select</code> for anon; authenticate
+          dashboard users and use user-scoped policies.
         </li>
-        <li>Restrict inserts by IP or rate limit at the edge.</li>
+        <li>Rate limit at the edge (included in <code>public/worker.js</code>).</li>
       </ul>
 
       <h2>App vs analytics projects</h2>
@@ -45,7 +43,7 @@ export default function DocsSecurityPage() {
       </p>
       <ul>
         <li>Bots that mimic a normal browser</li>
-        <li>Direct API inserts into <code>events</code></li>
+        <li>Direct API inserts into <code>events</code> (blocked for publishable key; use worker Secret key)</li>
         <li>Historical bot data already stored</li>
       </ul>
       <p>

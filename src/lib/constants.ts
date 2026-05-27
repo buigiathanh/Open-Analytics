@@ -1,7 +1,22 @@
 /** Hosted tracker + geo API (Add website setup & embed snippets). */
-export const DEFAULT_TRACKER_SCRIPT_URL =
-  "https://analytics.gitopen.dev/tracker.js";
+export const TRACKER_SCRIPT_VERSION = "1.0.1";
+
+const TRACKER_SCRIPT_BASE_URL = "https://analytics.gitopen.dev/tracker.js";
+
+/** Append ?v=… for cache busting when you redeploy tracker.js. */
+export function withTrackerVersion(url: string): string {
+  if (/[?&]v=/.test(url)) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=${TRACKER_SCRIPT_VERSION}`;
+}
+
+export const DEFAULT_TRACKER_SCRIPT_URL = withTrackerVersion(TRACKER_SCRIPT_BASE_URL);
 export const DEFAULT_GEO_API_URL = "https://analytics.gitopen.dev/api/geo";
+
+/** Cloudflare Worker URL for event ingest (data-endpoint). Set in .env for embed snippets. */
+export const DEFAULT_TRACKER_ENDPOINT =
+  process.env.NEXT_PUBLIC_TRACKER_ENDPOINT?.replace(/\/$/, "") ||
+  "https://your-worker.workers.dev";
 
 /** Live realtime demo on the marketing homepage (public share link). */
 export const DEMO_SHARE_REALTIME_URL =

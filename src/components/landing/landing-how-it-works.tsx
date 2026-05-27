@@ -110,8 +110,8 @@ export function LandingHowItWorks() {
               Three steps from zero to dashboard
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              No separate tracking server — events go straight to Supabase (or
-              an endpoint you choose).
+              Events go through a Cloudflare Worker into Supabase — publishable key stays
+              read-only for the dashboard.
             </p>
           </div>
 

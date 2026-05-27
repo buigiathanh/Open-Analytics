@@ -8,8 +8,8 @@ export default function DocsIntroductionPage() {
       <h1>Introduction</h1>
       <DocsLead>
         Open Analytics is an open-source web analytics stack: a Next.js dashboard,
-        a lightweight <code>tracker.js</code>, and Supabase for storage and realtime.
-        Events are sent directly from the browser — no dedicated ingest server required.
+        a lightweight <code>tracker.js</code>, Supabase for storage and realtime, and a
+        Cloudflare Worker proxy for secure event ingest.
       </DocsLead>
 
       <h2>What you get</h2>
@@ -65,12 +65,12 @@ export default function DocsIntroductionPage() {
           parses device/browser/UTM, optionally fetches geo (cached).
         </li>
         <li>
-          Events are inserted into the site&apos;s Supabase <code>events</code> table (or
-          POSTed to a custom <code>data-endpoint</code>).
+          Events are POSTed to your <a href="/docs/worker">Cloudflare Worker</a>, which inserts
+          into the site&apos;s Supabase <code>events</code> table with the Secret key.
         </li>
         <li>
-          The dashboard reads events from the site project and aggregates metrics in the
-          Next.js app. Realtime uses Supabase Realtime on <code>events</code>.
+          The dashboard reads events with the publishable key (select-only RLS) and aggregates
+          metrics in the Next.js app. Realtime uses Supabase Realtime on <code>events</code>.
         </li>
       </ol>
 
@@ -95,8 +95,8 @@ export default function DocsIntroductionPage() {
           projects.
         </li>
         <li>
-          Add a website in the dashboard and paste the snippet from{" "}
-          <Link href="/docs/tracker">Tracking script</Link>.
+          Deploy the <Link href="/docs/worker">Cloudflare Worker</Link> and paste the snippet
+          from <Link href="/docs/tracker">Tracking script</Link>.
         </li>
         <li>
           Open <Link href="/docs/metrics">Metrics</Link> to understand reported numbers.

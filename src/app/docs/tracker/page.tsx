@@ -5,23 +5,33 @@ export default function DocsTrackerPage() {
     <DocsProse>
       <h1>Tracking script</h1>
       <DocsLead>
-        Add <code>tracker.js</code> to every page you want to measure. Events are sent
-        with <code>fetch</code> to Supabase or your own endpoint.
+        Add <code>tracker.js</code> to every page you want to measure. Events are POSTed to
+        your <a href="/docs/worker">Cloudflare Worker</a> (recommended) or another custom
+        endpoint; the worker writes to Supabase with the Secret key.
       </DocsLead>
 
-      <h2>Basic embed</h2>
+      <h2>Recommended embed (Worker proxy)</h2>
       <p>
-        After adding a site in the dashboard, open <strong>Tracking</strong> (
-        <code>/app/[siteId]/setup</code>) and copy the snippet. It looks like:
+        After adding a site in the dashboard, deploy{" "}
+        <a href="/docs/worker">public/worker.js</a> to Cloudflare and use{" "}
+        <code>data-endpoint</code> in the snippet from <strong>Tracking</strong> (
+        <code>/app/[siteId]/setup</code>). Append{" "}
+        <code>?v=1.0.1</code> to the script URL and bump the version whenever you
+        redeploy <code>tracker.js</code> so browsers fetch the latest file.
       </p>
       <pre>{`<!-- Open Analytics -->
 <script
-  src="https://your-app.com/tracker.js"
+  src="https://your-app.com/tracker.js?v=1.0.1"
   data-site-key="YOUR_SITE_KEY"
-  data-supabase-url="https://xxx.supabase.co"
-  data-supabase-key="YOUR_ANON_KEY"
+  data-endpoint="https://your-worker.workers.dev"
   data-geo-url="https://your-app.com/api/geo"
 ></script>`}</pre>
+
+      <h2>Direct Supabase embed (legacy)</h2>
+      <p>
+        Older setups posted directly to Supabase with the publishable key. The default schema
+        no longer allows anon inserts — use the worker flow above instead.
+      </p>
 
       <h2>Script attributes</h2>
       <table>
@@ -42,25 +52,28 @@ export default function DocsTrackerPage() {
           </tr>
           <tr>
             <td>
-              <code>data-supabase-url</code>
+              <code>data-endpoint</code>
             </td>
             <td>Yes*</td>
-            <td>Site project Supabase URL (*unless using endpoint)</td>
+            <td>
+              POST JSON to your Cloudflare Worker (recommended). See{" "}
+              <a href="/docs/worker">Worker setup</a>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>data-supabase-url</code>
+            </td>
+            <td>No*</td>
+            <td>Not needed when using <code>data-endpoint</code></td>
           </tr>
           <tr>
             <td>
               <code>data-supabase-key</code>
             </td>
-            <td>Yes*</td>
-            <td>Site project anon key (*unless using endpoint)</td>
-          </tr>
-          <tr>
+            <td>No*</td>
             <td>
-              <code>data-endpoint</code>
-            </td>
-            <td>No</td>
-            <td>
-              POST JSON to your API instead of Supabase (hides anon key from the browser)
+              Dashboard reads only; do not use for browser writes with default RLS
             </td>
           </tr>
           <tr>
@@ -117,7 +130,7 @@ export default function DocsTrackerPage() {
     autoTrack: true
   };
 </script>
-<script src="https://your-app.com/tracker.js" …></script>`}</pre>
+<script src="https://your-app.com/tracker.js?v=1.0.1" …></script>`}</pre>
 
       <h2>JavaScript API</h2>
       <table>

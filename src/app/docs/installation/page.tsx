@@ -72,7 +72,8 @@ cp .env.example .env.local`}</pre>
       <p>
         Run <code>supabase/schema-app.sql</code> on the app Supabase project in <code>.env</code>.
         When you add a website, run <code>supabase/schema-analytics.sql</code> on your tracking
-        project and enter its Project ID + publishable key.
+        project, deploy <code>public/worker.js</code> to Cloudflare, and enter Project ID +
+        publishable key in the dashboard.
       </p>
 
       <h2>Run locally</h2>

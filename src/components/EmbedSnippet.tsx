@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Site } from "@/lib/types";
+import { DEFAULT_TRACKER_ENDPOINT, withTrackerVersion } from "@/lib/constants";
 
 interface EmbedSnippetProps {
   site: Site;
@@ -11,21 +12,13 @@ export function EmbedSnippet({ site }: EmbedSnippetProps) {
   const [copied, setCopied] = useState(false);
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
-  const supabaseUrl =
-    site.supabase_url ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "YOUR_SUPABASE_URL";
-  const supabaseKey =
-    site.supabase_anon_key ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "YOUR_SUPABASE_ANON_KEY";
+  const endpoint = DEFAULT_TRACKER_ENDPOINT;
 
   const snippet = `<!-- Open Analytics -->
 <script
-  src="${appUrl}/tracker.js"
+  src="${withTrackerVersion(`${appUrl}/tracker.js`)}"
   data-site-key="${site.site_key}"
-  data-supabase-url="${supabaseUrl}"
-  data-supabase-key="${supabaseKey}"
+  data-endpoint="${endpoint}"
   data-geo-url="${appUrl}/api/geo"
 ></script>`;
 
@@ -55,6 +48,11 @@ export function EmbedSnippet({ site }: EmbedSnippetProps) {
       <p className="text-xs text-zinc-500">
         Site key:{" "}
         <code className="text-zinc-700 dark:text-zinc-300">{site.site_key}</code>
+        {" · "}
+        Worker URL from <code>NEXT_PUBLIC_TRACKER_ENDPOINT</code> — see{" "}
+        <a href="/docs/worker" className="text-emerald-600 hover:underline">
+          Cloudflare Worker setup
+        </a>
       </p>
     </div>
   );
