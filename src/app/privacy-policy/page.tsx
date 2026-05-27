@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
 
       <p>
         Approximate geo (lat/lng, country) may be resolved inside the tracker via third-party IP
-        lookup providers and stored in your Supabase <code>events</code> table. You control
+        lookup providers (tried in order) and stored in your Supabase <code>events</code> table. You control
         retention and disclosure in your own privacy notice.
       </p>
 

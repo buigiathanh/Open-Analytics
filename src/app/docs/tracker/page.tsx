@@ -17,13 +17,13 @@ export default function DocsTrackerPage() {
         <a href="/docs/worker">public/worker.js</a> to Cloudflare, set{" "}
         <code>NEXT_PUBLIC_TRACKER_ENDPOINT</code> in your app env, then copy the snippet from{" "}
         <strong>Tracking</strong> (<code>/app/[siteId]/setup</code>). Append{" "}
-        <code>?v=1.0.2</code> to the script URL and bump the version whenever you redeploy{" "}
+        <code>?v=1.0.4</code> to the script URL and bump the version whenever you redeploy{" "}
         <code>tracker.js</code> (see <code>TRACKER_SCRIPT_VERSION</code> in{" "}
         <code>src/lib/constants.ts</code>).
       </p>
       <pre>{`<!-- Open Analytics -->
 <script
-  src="https://analytics.gitopen.dev/tracker.js?v=1.0.2"
+  src="https://analytics.gitopen.dev/tracker.js?v=1.0.4"
   data-site-key="YOUR_SITE_KEY"
   data-endpoint="https://your-worker.workers.dev"
 ></script>`}</pre>
@@ -103,7 +103,7 @@ dashboard     ──publishable key (read only)──►  Supabase events`}</pre
     autoTrack: true
   };
 </script>
-<script src="https://analytics.gitopen.dev/tracker.js?v=1.0.2"></script>`}</pre>
+<script src="https://analytics.gitopen.dev/tracker.js?v=1.0.4"></script>`}</pre>
 
       <h2>JavaScript API</h2>
       <table>
@@ -192,7 +192,7 @@ dashboard     ──publishable key (read only)──►  Supabase events`}</pre
         </li>
         <li>
           <strong>Approximate geo</strong> — optional lat/lng from built-in IP lookup providers
-          (cached in <code>localStorage</code>, no extra embed attribute)
+          (ipwho.is, geojs.io, etc.; tried in order, cached in <code>localStorage</code>)
         </li>
       </ul>
 

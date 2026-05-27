@@ -1,5 +1,5 @@
 /** Hosted tracker script URL (Add website setup & embed snippets). */
-export const TRACKER_SCRIPT_VERSION = "1.0.2";
+export const TRACKER_SCRIPT_VERSION = "1.0.4";
 
 const TRACKER_SCRIPT_BASE_URL = "https://analytics.gitopen.dev/tracker.js";
 
