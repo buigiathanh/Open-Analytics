@@ -8,7 +8,7 @@ import { DEFAULT_TRACKER_SCRIPT_URL } from "@/lib/constants";
 const SITE_TRACKER = {
   siteKey: "1b7033b1c695f1278e855e09",
   scriptUrl: DEFAULT_TRACKER_SCRIPT_URL,
-  endpoint: "https://openanalytics.buigiathanh2802.workers.dev",
+  endpoint: "https://open-analytics.dungbuon95.workers.dev/",
 } as const;
 
 /** Path prefixes where the marketing-site tracker must not run (dashboard). */
