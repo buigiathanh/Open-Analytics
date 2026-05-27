@@ -6,32 +6,32 @@ export default function DocsTrackerPage() {
       <h1>Tracking script</h1>
       <DocsLead>
         Add <code>tracker.js</code> to every page you want to measure. Events are POSTed to
-        your <a href="/docs/worker">Cloudflare Worker</a> (recommended) or another custom
-        endpoint; the worker writes to Supabase with the Secret key.
+        your <a href="/docs/worker">Cloudflare Worker</a> (<code>data-endpoint</code>); the
+        worker inserts into Supabase with the Secret key. The browser never talks to Supabase
+        directly.
       </DocsLead>
 
-      <h2>Recommended embed (Worker proxy)</h2>
+      <h2>Embed snippet</h2>
       <p>
         After adding a site in the dashboard, deploy{" "}
-        <a href="/docs/worker">public/worker.js</a> to Cloudflare and use{" "}
-        <code>data-endpoint</code> in the snippet from <strong>Tracking</strong> (
-        <code>/app/[siteId]/setup</code>). Append{" "}
-        <code>?v=1.0.1</code> to the script URL and bump the version whenever you
-        redeploy <code>tracker.js</code> so browsers fetch the latest file.
+        <a href="/docs/worker">public/worker.js</a> to Cloudflare, set{" "}
+        <code>NEXT_PUBLIC_TRACKER_ENDPOINT</code> in your app env, then copy the snippet from{" "}
+        <strong>Tracking</strong> (<code>/app/[siteId]/setup</code>). Append{" "}
+        <code>?v=1.0.2</code> to the script URL and bump the version whenever you redeploy{" "}
+        <code>tracker.js</code> (see <code>TRACKER_SCRIPT_VERSION</code> in{" "}
+        <code>src/lib/constants.ts</code>).
       </p>
       <pre>{`<!-- Open Analytics -->
 <script
-  src="https://your-app.com/tracker.js?v=1.0.1"
+  src="https://analytics.gitopen.dev/tracker.js?v=1.0.2"
   data-site-key="YOUR_SITE_KEY"
   data-endpoint="https://your-worker.workers.dev"
-  data-geo-url="https://your-app.com/api/geo"
 ></script>`}</pre>
 
-      <h2>Direct Supabase embed (legacy)</h2>
-      <p>
-        Older setups posted directly to Supabase with the publishable key. The default schema
-        no longer allows anon inserts — use the worker flow above instead.
-      </p>
+      <h2>Data flow</h2>
+      <pre>{`visitor browser
+  tracker.js  ──POST JSON──►  Cloudflare Worker  ──Secret key──►  Supabase events
+dashboard     ──publishable key (read only)──►  Supabase events`}</pre>
 
       <h2>Script attributes</h2>
       <table>
@@ -54,35 +54,10 @@ export default function DocsTrackerPage() {
             <td>
               <code>data-endpoint</code>
             </td>
-            <td>Yes*</td>
+            <td>Yes</td>
             <td>
-              POST JSON to your Cloudflare Worker (recommended). See{" "}
-              <a href="/docs/worker">Worker setup</a>.
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <code>data-supabase-url</code>
-            </td>
-            <td>No*</td>
-            <td>Not needed when using <code>data-endpoint</code></td>
-          </tr>
-          <tr>
-            <td>
-              <code>data-supabase-key</code>
-            </td>
-            <td>No*</td>
-            <td>
-              Dashboard reads only; do not use for browser writes with default RLS
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <code>data-geo-url</code>
-            </td>
-            <td>No</td>
-            <td>
-              URL for geo lookup (recommended: your app&apos;s <code>/api/geo</code>)
+              Your Cloudflare Worker URL — see{" "}
+              <a href="/docs/worker">Worker setup</a>
             </td>
           </tr>
           <tr>
@@ -121,16 +96,14 @@ export default function DocsTrackerPage() {
       </p>
       <pre>{`<script>
   window.OpenAnalytics = {
-    siteKey: "…",
-    supabaseUrl: "…",
-    supabaseKey: "…",
-    geoUrl: "…",
+    siteKey: "YOUR_SITE_KEY",
+    endpoint: "https://your-worker.workers.dev",
     domains: "example.com",
     doNotTrack: false,
     autoTrack: true
   };
 </script>
-<script src="https://your-app.com/tracker.js?v=1.0.1" …></script>`}</pre>
+<script src="https://analytics.gitopen.dev/tracker.js?v=1.0.2"></script>`}</pre>
 
       <h2>JavaScript API</h2>
       <table>
@@ -217,6 +190,10 @@ export default function DocsTrackerPage() {
           <strong>Bot filter</strong> — skips tracking when User-Agent matches common
           crawlers/preview bots
         </li>
+        <li>
+          <strong>Approximate geo</strong> — optional lat/lng from built-in IP lookup providers
+          (cached in <code>localStorage</code>, no extra embed attribute)
+        </li>
       </ul>
 
       <h2>Event payload (stored fields)</h2>
@@ -233,8 +210,8 @@ export default function DocsTrackerPage() {
           <code>device</code>, <code>platform</code>, <code>browser</code> (numeric enums)
         </li>
         <li>
-          <code>country_code</code>, <code>latitude</code>, <code>longitude</code> (if geo
-          available)
+          <code>country_code</code>, <code>latitude</code>, <code>longitude</code> (when IP
+          geo succeeds)
         </li>
         <li>
           <code>language</code>, <code>screen</code>, <code>distinct_id</code>
@@ -282,14 +259,6 @@ export default function DocsTrackerPage() {
           </tr>
         </tbody>
       </table>
-
-      <h2>Geo caching</h2>
-      <p>
-        Geo is not fetched on every event. Results are cached in{" "}
-        <code>localStorage</code> (<code>oa_geo</code>) and refreshed when the network
-        connection changes. Use <code>data-geo-url</code> pointing at your deployed{" "}
-        <code>/api/geo</code> route.
-      </p>
     </DocsProse>
   );
 }

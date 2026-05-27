@@ -19,7 +19,6 @@ export function EmbedSnippet({ site }: EmbedSnippetProps) {
   src="${withTrackerVersion(`${appUrl}/tracker.js`)}"
   data-site-key="${site.site_key}"
   data-endpoint="${endpoint}"
-  data-geo-url="${appUrl}/api/geo"
 ></script>`;
 
   async function copy() {

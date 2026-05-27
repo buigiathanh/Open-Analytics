@@ -1,14 +1,11 @@
 /**
  * Open Analytics — client-side tracker
- * Sends page views and events to a Cloudflare Worker (data-endpoint) or Supabase.
+ * Sends page views and events to your Cloudflare Worker (data-endpoint).
  *
  * Config via script tag attributes or window.OpenAnalytics before loading this file.
  *
  * data-site-key          — required site key from dashboard
- * data-supabase-url      — Supabase project URL
- * data-supabase-key      — Supabase anon public key
- * data-endpoint          — optional custom POST URL (JSON body, same fields as events table)
- * data-geo-url           — optional geo lookup URL
+ * data-endpoint          — required Worker URL (JSON body → Supabase via Secret key)
  * data-domains           — comma-separated hostnames allowed to track (optional)
  * data-do-not-track      — "true" to respect Do Not Track
  * data-auto-track        — "false" to disable automatic pageviews
@@ -68,10 +65,7 @@
     var fromScript = script
       ? {
           siteKey: script.getAttribute("data-site-key"),
-          supabaseUrl: script.getAttribute("data-supabase-url"),
-          supabaseKey: script.getAttribute("data-supabase-key"),
           endpoint: script.getAttribute("data-endpoint"),
-          geoUrl: script.getAttribute("data-geo-url"),
           domains: script.getAttribute("data-domains"),
           doNotTrack: script.getAttribute("data-do-not-track") === "true",
           autoTrack: script.getAttribute("data-auto-track") !== "false",
@@ -87,10 +81,7 @@
 
     return {
       siteKey: globalCfg.siteKey || fromScript.siteKey,
-      supabaseUrl: globalCfg.supabaseUrl || fromScript.supabaseUrl,
-      supabaseKey: globalCfg.supabaseKey || fromScript.supabaseKey,
       endpoint: globalCfg.endpoint || fromScript.endpoint,
-      geoUrl: globalCfg.geoUrl || fromScript.geoUrl,
       domains: domains,
       doNotTrack:
         globalCfg.doNotTrack === true || fromScript.doNotTrack === true,
@@ -478,14 +469,7 @@
   }
 
   function fetchGeoIp(cfg, callback) {
-    var chain = [];
-    if (cfg.geoUrl) {
-      chain.push({ url: cfg.geoUrl, parse: parseGenericGeo });
-    }
-    for (var i = 0; i < GEO_PROVIDERS.length; i++) {
-      chain.push(GEO_PROVIDERS[i]);
-    }
-    tryGeoProvidersChain(chain, 0, callback);
+    tryGeoProvidersChain(GEO_PROVIDERS, 0, callback);
   }
 
   function tryGeolocationThenIp(cfg, callback) {
@@ -625,25 +609,6 @@
     return base;
   }
 
-  function sendToSupabase(cfg, payload) {
-    var url = cfg.supabaseUrl.replace(/\/$/, "") + "/rest/v1/events";
-    return fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: cfg.supabaseKey,
-        Authorization: "Bearer " + cfg.supabaseKey,
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify(payload),
-    }).then(function (res) {
-      if (res.ok) return res;
-      return res.text().then(function () {
-        throw new Error("insert " + res.status);
-      });
-    });
-  }
-
   function sendToEndpoint(endpoint, payload) {
     // text/plain + no-cors: simple cross-origin POST (no preflight, no ACAO required).
     var url = String(endpoint).replace(/\/$/, "");
@@ -671,18 +636,11 @@
   }
 
   function track(cfg, eventType, extra) {
-    if (!cfg.siteKey) return;
+    if (!cfg.siteKey || !cfg.endpoint) return;
     if (trackingDisabled(cfg)) return;
 
-    var hasEndpoint = !!cfg.endpoint;
-    var hasSupabase = !!(cfg.supabaseUrl && cfg.supabaseKey);
-    if (!hasEndpoint && !hasSupabase) return;
-
     var payload = buildPayload(cfg, eventType, extra);
-    var p = hasEndpoint
-      ? sendToEndpoint(cfg.endpoint, payload)
-      : sendToSupabase(cfg, payload);
-    p.catch(function () {});
+    sendToEndpoint(cfg.endpoint, payload).catch(function () {});
   }
 
   var cfg = getConfig();

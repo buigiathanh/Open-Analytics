@@ -122,20 +122,17 @@ npx wrangler deploy`}</pre>
 
       <h2>4. Point tracker.js at the worker</h2>
       <p>
-        In your embed snippet, set <code>data-endpoint</code> to the worker URL. You do{" "}
-        <strong>not</strong> need <code>data-supabase-url</code> or{" "}
-        <code>data-supabase-key</code> for sending events (only for direct Supabase mode,
-        which this schema disables for anon).
+        In your embed snippet, set <code>data-endpoint</code> to the worker URL. The browser
+        sends events only to the worker — not to Supabase.
       </p>
       <pre>{`<!-- Open Analytics -->
 <script
-  src="https://your-app.com/tracker.js?v=1.0.1"
+  src="https://analytics.gitopen.dev/tracker.js?v=1.0.2"
   data-site-key="YOUR_SITE_KEY"
   data-endpoint="https://your-worker.workers.dev"
-  data-geo-url="https://your-app.com/api/geo"
 ></script>`}</pre>
       <p>
-        Use <code>?v=1.0.1</code> (or a newer version) on <code>tracker.js</code> to bust CDN /
+        Use <code>?v=1.0.2</code> (or a newer version) on <code>tracker.js</code> to bust CDN /
         browser cache after each deploy.
       </p>
       <p>

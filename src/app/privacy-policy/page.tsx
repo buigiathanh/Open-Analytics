@@ -100,10 +100,11 @@ export default function PrivacyPolicyPage() {
 
       <h3>Your tracking data — in your Supabase, not ours</h3>
       <p>
-        When you embed <code>tracker.js</code> on <strong>your</strong> properties, events are sent{" "}
-        <strong>directly</strong> from your visitors&apos; browsers to the Supabase project{" "}
-        <strong>you</strong> configure (or another endpoint you choose). Open Analytics does not
-        receive, copy, or retain those events on our application servers.
+        When you embed <code>tracker.js</code> on <strong>your</strong> properties, events are POSTed
+        from your visitors&apos; browsers to your <strong>Cloudflare Worker</strong> (
+        <code>data-endpoint</code>). The worker inserts into the Supabase project{" "}
+        <strong>you</strong> configure. Open Analytics does not receive, copy, or retain those
+        events on our application servers.
       </p>
       <p>
         The dashboard reads from your project to show metrics; that is display access only. We do
@@ -125,12 +126,10 @@ export default function PrivacyPolicyPage() {
         retention, and visitor rights for that data. This policy does not replace yours.
       </p>
 
-      <h3>Optional: our <code>/api/geo</code> for your tracker</h3>
       <p>
-        If you set <code>data-geo-url</code> to our <code>/api/geo</code>, we may forward your
-        visitor&apos;s IP to third-party geo providers and return approximate location. We do not add
-        that to our Role B analytics dataset; it is a pass-through for your tracker. You may host
-        your own geo endpoint instead.
+        Approximate geo (lat/lng, country) may be resolved inside the tracker via third-party IP
+        lookup providers and stored in your Supabase <code>events</code> table. You control
+        retention and disclosure in your own privacy notice.
       </p>
 
       <hr />

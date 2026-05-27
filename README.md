@@ -51,7 +51,7 @@
 
 ## Part 1 — Analytics dashboard (management app)
 
-The dashboard is a **Next.js** application: landing page, authenticated `/app` UI, `/docs`, optional `/api/geo`, and it **serves** `public/tracker.js` at `/tracker.js`.
+The dashboard is a **Next.js** application: landing page, authenticated `/app` UI, `/docs`, and it **serves** `public/tracker.js` at `/tracker.js`.
 
 ### What it includes
 
@@ -104,7 +104,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 | `NEXT_PUBLIC_SUPABASE_URL` | App project URL (sign-in, site list) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | App publishable key (OAuth / session in browser) |
 | `SUPABASE_SERVICE_ROLE_KEY` | App **Secret key** — server only; saves site bookmarks to app DB after sign-in |
-| `NEXT_PUBLIC_APP_URL` | OAuth redirects, embed snippet, `/api/geo` |
+| `NEXT_PUBLIC_APP_URL` | OAuth redirects and embed snippet base URL |
 
 `SUPABASE_SERVICE_ROLE_KEY` is **not** your analytics project key. It is only for the app Supabase in `.env`. Per-website Project ID + publishable key are entered in **Add website** (step 3).
 
@@ -144,7 +144,7 @@ OAuth redirect URLs must include `https://your-domain.com/auth/callback` (see `.
 
 ## Part 2 — Tracking script (`public/tracker.js`)
 
-[`public/tracker.js`](public/tracker.js) is a **single vanilla JavaScript file** (~770 lines, no build step). It runs in the visitor’s browser and POSTs analytics to your **Cloudflare Worker** (recommended) or another HTTP endpoint. The worker inserts into Supabase with the Secret key.
+[`public/tracker.js`](public/tracker.js) is a **single vanilla JavaScript file** (~770 lines, no build step). It runs in the visitor’s browser and POSTs analytics to your **Cloudflare Worker** (`data-endpoint`). The worker inserts into Supabase with the Secret key — the browser never writes to Supabase directly.
 
 [`public/worker.js`](public/worker.js) is the reference ingest proxy: rate limiting, payload checks, and Supabase insert. See **Cloudflare Worker** docs at `/docs/worker`.
 
@@ -168,14 +168,13 @@ Deploy Part 1 and point `src` at your origin:
 
 ```html
 <script
-  src="https://your-dashboard.com/tracker.js?v=1.0.1"
+  src="https://your-dashboard.com/tracker.js?v=1.0.2"
   data-site-key="YOUR_SITE_KEY"
   data-endpoint="https://your-worker.workers.dev"
-  data-geo-url="https://your-dashboard.com/api/geo"
 ></script>
 ```
 
-Append `?v=1.0.1` to the script URL and bump the version when you redeploy `tracker.js` (see `TRACKER_SCRIPT_VERSION` in `src/lib/constants.ts`).
+Append `?v=1.0.2` to the script URL and bump the version when you redeploy `tracker.js` (see `TRACKER_SCRIPT_VERSION` in `src/lib/constants.ts`).
 
 **Option B — Host `tracker.js` yourself**
 
@@ -183,7 +182,7 @@ Copy [`public/tracker.js`](public/tracker.js) to any static host (S3, Cloudflare
 
 ```html
 <script
-  src="https://cdn.example.com/tracker.js?v=1.0.1"
+  src="https://cdn.example.com/tracker.js?v=1.0.2"
   data-site-key="YOUR_SITE_KEY"
   data-endpoint="https://your-worker.workers.dev"
 ></script>
@@ -198,13 +197,12 @@ Set options before loading the file:
   window.OpenAnalytics = {
     siteKey: "YOUR_SITE_KEY",
     endpoint: "https://your-worker.workers.dev",
-    geoUrl: "https://your-app.com/api/geo",
     domains: "example.com,www.example.com",
     doNotTrack: false,
     autoTrack: true,
   };
 </script>
-<script src="https://your-host/tracker.js?v=1.0.1"></script>
+<script src="https://your-host/tracker.js?v=1.0.2"></script>
 ```
 
 ### Script attributes (`data-*`)
@@ -212,10 +210,7 @@ Set options before loading the file:
 | Attribute | Required | Description |
 |-----------|----------|-------------|
 | `data-site-key` | **Yes** | `site_key` from the app (Add website → Setup) |
-| `data-endpoint` | **Yes** | Worker URL — POST JSON (see [`public/worker.js`](public/worker.js)) |
-| `data-geo-url` | No | Geo lookup URL (e.g. dashboard `/api/geo`); cached in `localStorage` |
-| `data-supabase-url` | No | Not needed when using `data-endpoint` |
-| `data-supabase-key` | No | Dashboard reads only; default RLS blocks anon inserts |
+| `data-endpoint` | **Yes** | Cloudflare Worker URL — POST JSON (see [`public/worker.js`](public/worker.js)) |
 | `data-domains` | No | Comma-separated hostnames to allow |
 | `data-do-not-track="true"` | No | Skip tracking when DNT is on |
 | `data-auto-track="false"` | No | No auto pageview; call `OpenAnalytics.trackPageview()` |
@@ -315,7 +310,7 @@ public/
   worker.js               # Part 3 — Cloudflare ingest proxy (Secret key)
 
 src/
-  app/                    # Part 1 — Next.js routes (/, /app, /docs, /api/geo, …)
+  app/                    # Part 1 — Next.js routes (/, /app, /docs, …)
   components/             # Dashboard & landing UI
   lib/                    # Supabase clients, analytics queries
 

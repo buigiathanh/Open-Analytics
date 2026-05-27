@@ -64,7 +64,7 @@ export default function DocsSecurityPage() {
           <code>identify()</code> can attach a logged-in user id; treat <code>distinct_id</code>{" "}
           as personal data if it maps to accounts.
         </li>
-        <li>Geo uses approximate location from IP via your geo endpoint — document retention.</li>
+        <li>Geo uses approximate location from IP lookup inside the tracker — document retention.</li>
       </ul>
 
       <h2>Production checklist</h2>

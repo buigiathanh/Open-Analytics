@@ -575,6 +575,12 @@ export function RealtimeOverlay({
         </div>
       </div>
 
+      {mapViewMode === "2d" && (
+        <p className="pointer-events-none absolute bottom-4 left-0 right-0 z-10 text-center text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+          Hoang Sa and Truong Sa belong to Vietnam
+        </p>
+      )}
+
       <p className="pointer-events-none absolute bottom-4 right-4 text-[10px] text-zinc-400 dark:text-zinc-500">
         Powered by{" "}
         <span className="font-medium text-zinc-500 dark:text-zinc-400">
