@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import { SiteNav } from "@/components/dashboard/SiteNav";
 import { MetricBar } from "@/components/dashboard/MetricBar";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { BreakdownPanel } from "@/components/dashboard/BreakdownPanel";
@@ -14,16 +13,19 @@ import type { Site } from "@/lib/types";
 interface SiteDashboardProps {
   site: Site;
   analytics: DashboardAnalytics;
+  showSearchConsole?: boolean;
 }
 
-export function SiteDashboard({ site, analytics }: SiteDashboardProps) {
+export function SiteDashboard({
+  site,
+  analytics,
+  showSearchConsole = false,
+}: SiteDashboardProps) {
   const periodLabel =
     analytics.periodDays === 30 ? "30 days" : "7 days";
 
   return (
     <div className="relative pb-20">
-      <SiteNav site={site} active="overview" />
-
       <Suspense fallback={null}>
         <PeriodSelector siteId={site.id} />
       </Suspense>
@@ -36,7 +38,11 @@ export function SiteDashboard({ site, analytics }: SiteDashboardProps) {
       <MetricBar metrics={analytics.metrics} />
 
       <div className="mt-6">
-        <TrendChart series={analytics.series} />
+        <TrendChart
+          siteId={site.id}
+          series={analytics.series}
+          showSearchConsole={showSearchConsole}
+        />
       </div>
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2">

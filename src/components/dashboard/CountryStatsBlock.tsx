@@ -80,7 +80,7 @@ export function CountryStatsBlock({ rows }: { rows: BreakdownRow[] }) {
 
   if (rows.length === 0) {
     return (
-      <section className="flex min-h-[320px] flex-col rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+      <section className="flex max-h-[400px] min-h-[320px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
         <h3 className="shrink-0 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           By country
         </h3>
@@ -92,7 +92,7 @@ export function CountryStatsBlock({ rows }: { rows: BreakdownRow[] }) {
   }
 
   return (
-    <section className="flex min-h-[320px] flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <section className="flex max-h-[400px] min-h-[320px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="shrink-0 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800 sm:px-5">
         <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           By country

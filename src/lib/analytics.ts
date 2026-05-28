@@ -26,6 +26,8 @@ export interface TimeSeriesPoint {
   label: string;
   visitors: number;
   pageviews: number;
+  /** Google Search clicks (when Search Console is connected). */
+  gscClicks?: number;
 }
 
 export interface BreakdownRow {

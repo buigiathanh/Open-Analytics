@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DocsLead, DocsProse } from "@/components/docs/DocsProse";
 
 export default function DocsDashboardPage() {
@@ -25,24 +26,24 @@ export default function DocsDashboardPage() {
         </li>
       </ul>
 
-      <h2>Site navigation</h2>
-      <p>Each site has three tabs:</p>
+      <h2>Site sidebar</h2>
+      <p>Each site uses a left sidebar (mobile: horizontal nav) with these sections:</p>
       <table>
         <thead>
           <tr>
-            <th>Tab</th>
+            <th>Section</th>
             <th>Path</th>
             <th>Purpose</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Statistics</td>
+            <td>Stats</td>
             <td>
               <code>/app/[siteId]</code>
             </td>
             <td>
-              Metric bar, trend chart, breakdown grids (channels, pages, geo, device, etc.),
+              Metric bar, trend chart (optional Search Console clicks), breakdown grids,
               7/30-day selector
             </td>
           </tr>
@@ -57,11 +58,35 @@ export default function DocsDashboardPage() {
             </td>
           </tr>
           <tr>
-            <td>Tracking</td>
+            <td>Search Console</td>
+            <td>
+              <code>/app/[siteId]/search-console</code>
+            </td>
+            <td>
+              Google Search performance, queries/pages/geo breakdown, sitemaps — requires{" "}
+              <Link href="/docs/search-console">Search Console setup</Link>
+            </td>
+          </tr>
+          <tr>
+            <td>Similarweb</td>
+            <td>
+              <code>/app/[siteId]/similarweb</code>
+            </td>
+            <td>Estimated traffic, ranking, keywords (public Similarweb data)</td>
+          </tr>
+          <tr>
+            <td>Tracking code</td>
             <td>
               <code>/app/[siteId]/setup</code>
             </td>
             <td>Copy embed snippet with site key and Supabase credentials</td>
+          </tr>
+          <tr>
+            <td>Settings</td>
+            <td>
+              <code>/app/[siteId]/settings/…</code>
+            </td>
+            <td>General, Supabase, sharing (realtime public link)</td>
           </tr>
         </tbody>
       </table>
@@ -73,7 +98,10 @@ export default function DocsDashboardPage() {
           <strong>Pageviews</strong>, <strong>Bounce rate</strong>,{" "}
           <strong>Visit time</strong> with period-over-period change when available.
         </li>
-        <li>Trend chart: daily pageviews over the selected range.</li>
+        <li>
+          Trend chart: daily pageviews and visitors; optional Search Console clicks when
+          connected (toggle series above the chart).
+        </li>
         <li>
           Four breakdown blocks in a 2×2 grid (channel/referrer, content pages, country
           donut, browser/device/OS).

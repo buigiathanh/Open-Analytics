@@ -17,6 +17,11 @@ export const DOCS_NAV: DocsNavItem[] = [
   { title: "Tracking script", href: "/docs/tracker", description: "Embed, options, and API" },
   { title: "Metrics", href: "/docs/metrics", description: "How numbers are calculated" },
   { title: "Dashboard", href: "/docs/dashboard", description: "Stats, breakdowns, realtime" },
+  {
+    title: "Search Console",
+    href: "/docs/search-console",
+    description: "Connect Google Search Console OAuth",
+  },
   { title: "Security", href: "/docs/security", description: "Production hardening" },
 ];
 

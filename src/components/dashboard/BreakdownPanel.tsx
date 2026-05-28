@@ -56,8 +56,8 @@ export function BreakdownPanel({
   const max = rows[0]?.count ?? 1;
 
   return (
-    <div className="flex min-h-[320px] flex-col rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+    <div className="flex max-h-[400px] min-h-[320px] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="shrink-0 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
         <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           {title}
         </h3>
@@ -78,7 +78,7 @@ export function BreakdownPanel({
           ))}
         </div>
       </div>
-      <ul className="flex-1 divide-y divide-zinc-50 overflow-y-auto dark:divide-zinc-900">
+      <ul className="min-h-0 flex-1 divide-y divide-zinc-50 overflow-y-auto dark:divide-zinc-900">
         {rows.length === 0 ? (
           <li className="px-4 py-8 text-center text-sm text-zinc-500">
             No data

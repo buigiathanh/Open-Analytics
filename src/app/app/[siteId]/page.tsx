@@ -1,12 +1,16 @@
 import { notFound } from "next/navigation";
-import { STATS_CONTAINER_CLASS } from "@/lib/layout";
 import { SetupBanner } from "@/components/SetupBanner";
 import { getRegistryUser, getSiteForUser } from "@/lib/registry-sites";
 import { getSupabase } from "@/lib/supabase";
 import { getSupabaseForSite } from "@/lib/supabase-project";
 import { buildDashboardAnalytics } from "@/lib/analytics";
 import { ONLINE_WINDOW_MS } from "@/lib/constants";
-import type { AnalyticsEvent, Site } from "@/lib/types";
+import {
+  getGscDailySeries,
+  isGscReadyForProject,
+  mergeGscIntoTimeSeries,
+} from "@/lib/google/search-console-overview";
+import type { AnalyticsEvent } from "@/lib/types";
 import { SiteDashboard } from "./SiteDashboard";
 
 export const dynamic = "force-dynamic";
@@ -23,11 +27,7 @@ export default async function SitePage({ params, searchParams }: PageProps) {
 
   const registry = await getSupabase();
   if (!registry) {
-    return (
-      <main className={`${STATS_CONTAINER_CLASS} py-10`}>
-        <SetupBanner />
-      </main>
-    );
+    return <SetupBanner />;
   }
 
   const user = await getRegistryUser(registry);
@@ -37,11 +37,7 @@ export default async function SitePage({ params, searchParams }: PageProps) {
   if (!siteRow) notFound();
   const eventsDb = getSupabaseForSite(siteRow);
   if (!eventsDb) {
-    return (
-      <main className={`${STATS_CONTAINER_CLASS} py-10`}>
-        <SetupBanner />
-      </main>
-    );
+    return <SetupBanner />;
   }
 
   const fetchDays = Math.max(periodDays * 2, 60);
@@ -63,10 +59,21 @@ export default async function SitePage({ params, searchParams }: PageProps) {
     periodDays
   );
 
+  let series = analytics.series;
+  if (await isGscReadyForProject(siteId)) {
+    const gscDaily = await getGscDailySeries(siteId, periodDays);
+    series = mergeGscIntoTimeSeries(series, gscDaily);
+  }
+  const showSearchConsole = series.some((p) => p.gscClicks != null);
+
   return (
-    <main className={`${STATS_CONTAINER_CLASS} flex-1 py-8`}>
+    <>
       <SetupBanner />
-      <SiteDashboard site={siteRow} analytics={analytics} />
-    </main>
+      <SiteDashboard
+        site={siteRow}
+        analytics={{ ...analytics, series }}
+        showSearchConsole={showSearchConsole}
+      />
+    </>
   );
 }
