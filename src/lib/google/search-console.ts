@@ -154,6 +154,42 @@ export async function listSitemaps(
   return data.sitemap ?? [];
 }
 
+export async function getSitemap(
+  accessToken: string,
+  siteUrl: string,
+  feedpath: string
+): Promise<GscSitemap> {
+  return gscFetch<GscSitemap>(
+    accessToken,
+    `/sites/${encodeSiteUrl(siteUrl)}/sitemaps/${encodeURIComponent(feedpath)}`
+  );
+}
+
+export function gscSitemapDiscoveredPages(sitemap: GscSitemap): number {
+  return (sitemap.contents ?? []).reduce(
+    (sum, c) => sum + Number(c.submitted ?? 0),
+    0
+  );
+}
+
+export function mapGscSitemapForApi(s: GscSitemap) {
+  return {
+    path: s.path,
+    lastSubmitted: s.lastSubmitted ?? null,
+    lastDownloaded: s.lastDownloaded ?? null,
+    isPending: s.isPending ?? false,
+    isSitemapsIndex: s.isSitemapsIndex ?? false,
+    warnings: Number(s.warnings ?? 0),
+    errors: Number(s.errors ?? 0),
+    type: s.type ?? null,
+    discoveredPages: gscSitemapDiscoveredPages(s),
+    contents: (s.contents ?? []).map((c) => ({
+      type: c.type ?? "web",
+      submitted: Number(c.submitted ?? 0),
+    })),
+  };
+}
+
 export async function submitSitemap(
   accessToken: string,
   siteUrl: string,

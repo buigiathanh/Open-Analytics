@@ -67,6 +67,11 @@ export default function DocsSearchConsolePage() {
       <pre>{`-- File: supabase/migrations/add-google-search-console.sql
 create table public.google_search_console_connections (
   ...
+);
+
+-- File: supabase/migrations/add-gsc-managed-links.sql
+create table public.gsc_managed_links (
+  ...
 );`}</pre>
       <p>
         Or use the full definition in <code>supabase/schema-app.sql</code> if you are
@@ -189,6 +194,10 @@ GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET=GOCSPX-...
           scope)
         </li>
         <li>
+          <strong>Links</strong> — pages from search analytics; check index status per
+          URL with the search icon (URL Inspection API)
+        </li>
+        <li>
           <strong>Disconnect</strong> — removes stored tokens for that website
         </li>
       </ul>
@@ -246,7 +255,8 @@ GOOGLE_SEARCH_CONSOLE_CLIENT_SECRET=GOCSPX-...
           <tr>
             <td>Could not save / disconnect fails</td>
             <td>
-              Run <code>add-google-search-console.sql</code>; confirm{" "}
+              Run <code>add-google-search-console.sql</code> and{" "}
+              <code>add-gsc-managed-links.sql</code>; confirm{" "}
               <code>SUPABASE_SERVICE_ROLE_KEY</code>
             </td>
           </tr>

@@ -4,6 +4,7 @@ import { getValidGscAccessToken } from "@/lib/google/search-console-auth";
 import {
   deleteSitemap,
   listSitemaps,
+  mapGscSitemapForApi,
   submitSitemap,
 } from "@/lib/google/search-console";
 
@@ -30,15 +31,7 @@ export async function GET(_request: Request, context: RouteContext) {
       token.connection.site_url
     );
     return NextResponse.json({
-      sitemaps: sitemaps.map((s) => ({
-        path: s.path,
-        lastSubmitted: s.lastSubmitted ?? null,
-        lastDownloaded: s.lastDownloaded ?? null,
-        isPending: s.isPending ?? false,
-        warnings: s.warnings ?? 0,
-        errors: s.errors ?? 0,
-        type: s.type ?? null,
-      })),
+      sitemaps: sitemaps.map(mapGscSitemapForApi),
     });
   } catch (e) {
     return NextResponse.json(

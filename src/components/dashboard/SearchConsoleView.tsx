@@ -24,11 +24,12 @@ import {
   type GscDimensionId,
 } from "./GscBreakdownTable";
 import { GSC_DEFAULT_BREAKDOWN_MAX_ROWS } from "@/lib/google/search-console-breakdown";
+import { GscLinksSection } from "./GscLinksSection";
+import { GscSitemapsSection } from "./GscSitemapsSection";
 import {
   SearchConsoleChartSkeleton,
   SearchConsoleMetricsSkeleton,
   SearchConsolePageSkeleton,
-  SearchConsoleSitemapsSkeleton,
 } from "./SearchConsoleSkeletons";
 
 type ConnectionStatus = {
@@ -65,17 +66,7 @@ type AnalyticsData = {
   };
 };
 
-type SitemapRow = {
-  path: string;
-  lastSubmitted: string | null;
-  lastDownloaded: string | null;
-  isPending: boolean;
-  warnings: number;
-  errors: number;
-  type: string | null;
-};
-
-type TabId = "performance" | "sitemaps";
+type TabId = "performance" | "sitemaps" | "links";
 
 const ERROR_MESSAGES: Record<string, string> = {
   denied: "Google access was denied. Try connecting again.",
@@ -92,14 +83,12 @@ export function SearchConsoleView({ site }: { site: Site }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>("performance");
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [sitemaps, setSitemaps] = useState<SitemapRow[]>([]);
   const [properties, setProperties] = useState<
     { siteUrl: string; permissionLevel: string }[]
   >([]);
   const [selectedProperty, setSelectedProperty] = useState("");
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sitemapUrl, setSitemapUrl] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   const apiBase = `/api/sites/${site.id}/search-console`;
@@ -134,25 +123,6 @@ export function SearchConsoleView({ site }: { site: Site }) {
       setDataLoading(false);
     }
   }, [apiBase, periodDays]);
-
-  const loadSitemaps = useCallback(async () => {
-    setDataLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${apiBase}/sitemaps`, { credentials: "include" });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Could not load sitemaps.");
-        setSitemaps([]);
-        return;
-      }
-      setSitemaps(data.sitemaps ?? []);
-    } catch {
-      setError("Network error loading sitemaps.");
-    } finally {
-      setDataLoading(false);
-    }
-  }, [apiBase]);
 
   const loadProperties = useCallback(async () => {
     const res = await fetch(`${apiBase}/property`, { credentials: "include" });
@@ -189,8 +159,7 @@ export function SearchConsoleView({ site }: { site: Site }) {
   useEffect(() => {
     if (!status?.connected || status.needsProperty || !status.siteUrl) return;
     if (tab === "performance") loadAnalytics();
-    if (tab === "sitemaps") loadSitemaps();
-  }, [tab, status, loadAnalytics, loadSitemaps]);
+  }, [tab, status, loadAnalytics]);
 
   function connectGoogle() {
     window.location.href = `${apiBase}/connect`;
@@ -212,7 +181,6 @@ export function SearchConsoleView({ site }: { site: Site }) {
         oauthConfigured: status?.oauthConfigured ?? true,
       });
       setAnalytics(null);
-      setSitemaps([]);
       router.refresh();
     } finally {
       setActionLoading(false);
@@ -242,43 +210,6 @@ export function SearchConsoleView({ site }: { site: Site }) {
       );
       router.replace(`/app/${site.id}/search-console`);
       await loadAnalytics();
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function submitSitemap() {
-    if (!sitemapUrl.trim()) return;
-    setActionLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${apiBase}/sitemaps`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedpath: sitemapUrl.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Could not submit sitemap.");
-        return;
-      }
-      setSitemapUrl("");
-      await loadSitemaps();
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function removeSitemap(feedpath: string) {
-    if (!confirm(`Remove sitemap ${feedpath}?`)) return;
-    setActionLoading(true);
-    try {
-      const res = await fetch(
-        `${apiBase}/sitemaps?feedpath=${encodeURIComponent(feedpath)}`,
-        { method: "DELETE", credentials: "include" }
-      );
-      if (res.ok) await loadSitemaps();
     } finally {
       setActionLoading(false);
     }
@@ -406,6 +337,7 @@ export function SearchConsoleView({ site }: { site: Site }) {
   const tabs: { id: TabId; label: string }[] = [
     { id: "performance", label: "Performance" },
     { id: "sitemaps", label: "Sitemaps" },
+    { id: "links", label: "Links" },
   ];
 
   const emptyBreakdown: Record<GscDimensionId, GscBreakdownRow[]> = {
@@ -559,71 +491,9 @@ export function SearchConsoleView({ site }: { site: Site }) {
         </>
       )}
 
-      {tab === "sitemaps" && dataLoading && <SearchConsoleSitemapsSkeleton />}
+      {tab === "sitemaps" && <GscSitemapsSection apiBase={apiBase} />}
 
-      {tab === "sitemaps" && !dataLoading && (
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <input
-              value={sitemapUrl}
-              onChange={(e) => setSitemapUrl(e.target.value)}
-              placeholder="https://example.com/sitemap.xml"
-              className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-            />
-            <button
-              type="button"
-              onClick={submitSitemap}
-              disabled={actionLoading || !sitemapUrl.trim()}
-              className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
-              Submit sitemap
-            </button>
-          </div>
-          <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-            <h3 className="border-b border-zinc-100 px-4 py-3 text-sm font-semibold dark:border-zinc-800">
-              Submitted sitemaps
-            </h3>
-            {sitemaps.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-zinc-500">
-                No sitemaps yet
-              </p>
-            ) : (
-              <ul className="divide-y divide-zinc-50 dark:divide-zinc-900">
-                {sitemaps.map((s) => (
-                  <li
-                    key={s.path}
-                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-zinc-800 dark:text-zinc-200">
-                        {s.path}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {s.errors > 0 || s.warnings > 0
-                          ? `${s.errors} errors · ${s.warnings} warnings`
-                          : s.isPending
-                            ? "Pending"
-                            : "OK"}
-                        {s.lastSubmitted
-                          ? ` · submitted ${s.lastSubmitted.slice(0, 10)}`
-                          : null}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeSitemap(s.path)}
-                      disabled={actionLoading}
-                      className="text-xs font-medium text-red-600 hover:text-red-500 dark:text-red-400"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
+      {tab === "links" && <GscLinksSection apiBase={apiBase} />}
 
     </div>
   );
