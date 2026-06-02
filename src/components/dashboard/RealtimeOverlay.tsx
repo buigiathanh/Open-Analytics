@@ -139,6 +139,7 @@ interface RealtimeOverlayProps {
   onToggleRotating: () => void;
   shareUrl: string;
   embedCode: string;
+  simpleView?: boolean;
 }
 
 export function RealtimeOverlay({
@@ -159,6 +160,7 @@ export function RealtimeOverlay({
   onToggleRotating,
   shareUrl,
   embedCode,
+  simpleView = false,
 }: RealtimeOverlayProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -462,118 +464,124 @@ export function RealtimeOverlay({
           <span className="text-zinc-500 dark:text-zinc-300">{site.domain}</span>
         </p>
 
-        <div className="mt-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            Last 5 min
-          </p>
-          <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-            {total5} pageviews · peak {peak.pageviews} @ {peak.label}
-          </p>
-          <div className="mt-2 h-12">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={minuteSeries}>
-                <defs>
-                  <linearGradient id="oaRtPv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="label" hide />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area
-                  type="monotone"
-                  dataKey="pageviews"
-                  stroke="#3b82f6"
-                  fill="url(#oaRtPv)"
-                  strokeWidth={1.5}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {!simpleView && (
+          <>
+            <div className="mt-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Last 5 min
+              </p>
+              <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                {total5} pageviews · peak {peak.pageviews} @ {peak.label}
+              </p>
+              <div className="mt-2 h-12">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={minuteSeries}>
+                    <defs>
+                      <linearGradient id="oaRtPv" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="label" hide />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Area
+                      type="monotone"
+                      dataKey="pageviews"
+                      stroke="#3b82f6"
+                      fill="url(#oaRtPv)"
+                      strokeWidth={1.5}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-        <div className="mt-4 space-y-2.5 border-t border-zinc-200/80 pt-3 dark:border-white/10">
-          <BreakdownHorizontalRow title="Referrers" rows={referrers} />
-          <BreakdownHorizontalRow title="Countries" rows={countries} showFlag />
-          <BreakdownHorizontalRow
-            title="Devices"
-            rows={devices}
-            showDeviceIcon
-          />
-        </div>
+            <div className="mt-4 space-y-2.5 border-t border-zinc-200/80 pt-3 dark:border-white/10">
+              <BreakdownHorizontalRow title="Referrers" rows={referrers} />
+              <BreakdownHorizontalRow title="Countries" rows={countries} showFlag />
+              <BreakdownHorizontalRow
+                title="Devices"
+                rows={devices}
+                showDeviceIcon
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="pointer-events-none absolute bottom-3 left-3 z-10 w-full max-w-[min(100%,380px)] sm:bottom-5 sm:left-5">
-        <div
-          className={`pointer-events-auto max-h-[250px] w-full overflow-hidden ${GLASS}`}
-        >
-          <ul className="scrollbar-hide max-h-[250px] overflow-y-auto p-2">
-          {feed.length === 0 ? (
-            <li className="px-2 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-              No activity in the last 5 minutes
-            </li>
-          ) : (
-            feed.map((v) => {
-              const status = visitorStatusColor(v.visitor_id);
-              const flagCode =
-                v.country_code?.length === 2
-                  ? v.country_code.toLowerCase()
-                  : "xx";
-              const isSelected = selectedVisitorId === v.visitor_id;
-              return (
-                <li key={v.visitor_id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelectVisitor(v.visitor_id)}
-                    className={cn(
-                      "relative flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition",
-                      isSelected
-                        ? "bg-blue-500/15 ring-1 ring-blue-500/40 dark:bg-blue-500/20"
-                        : "hover:bg-zinc-100/80 dark:hover:bg-white/5"
-                    )}
-                  >
-                  <Eye className="size-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" />
-                  <div className="relative shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={v.avatar}
-                      alt=""
-                      width={28}
-                      height={28}
-                      className="size-7 rounded-full border-2 border-white bg-zinc-100 object-cover dark:border-zinc-800 dark:bg-zinc-800"
-                    />
-                    <span
-                      className={`absolute -right-0.5 -top-0.5 size-2 rounded-full border border-white dark:border-zinc-900 ${STATUS_DOT[status]}`}
-                      aria-hidden
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-200">
-                      {v.displayName}
-                    </p>
-                    <p className="flex items-center gap-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+      {!simpleView && (
+        <div className="pointer-events-none absolute bottom-3 left-3 z-10 w-full max-w-[min(100%,380px)] sm:bottom-5 sm:left-5">
+          <div
+            className={`pointer-events-auto max-h-[250px] w-full overflow-hidden ${GLASS}`}
+          >
+            <ul className="scrollbar-hide max-h-[250px] overflow-y-auto p-2">
+            {feed.length === 0 ? (
+              <li className="px-2 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                No activity in the last 5 minutes
+              </li>
+            ) : (
+              feed.map((v) => {
+                const status = visitorStatusColor(v.visitor_id);
+                const flagCode =
+                  v.country_code?.length === 2
+                    ? v.country_code.toLowerCase()
+                    : "xx";
+                const isSelected = selectedVisitorId === v.visitor_id;
+                return (
+                  <li key={v.visitor_id}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectVisitor(v.visitor_id)}
+                      className={cn(
+                        "relative flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition",
+                        isSelected
+                          ? "bg-blue-500/15 ring-1 ring-blue-500/40 dark:bg-blue-500/20"
+                          : "hover:bg-zinc-100/80 dark:hover:bg-white/5"
+                      )}
+                    >
+                    <Eye className="size-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" />
+                    <div className="relative shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`https://flagcdn.com/w20/${flagCode}.png`}
+                        src={v.avatar}
                         alt=""
-                        width={14}
-                        height={10}
-                        className="h-2.5 w-3.5 shrink-0 rounded-[1px]"
+                        width={28}
+                        height={28}
+                        className="size-7 rounded-full border-2 border-white bg-zinc-100 object-cover dark:border-zinc-800 dark:bg-zinc-800"
                       />
-                      <span className="truncate">{v.path || "/"}</span>
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500">
-                    {formatTimeAgo(v.last_seen)}
-                  </span>
-                  </button>
-                </li>
-              );
-            })
-          )}
-        </ul>
+                      <span
+                        className={`absolute -right-0.5 -top-0.5 size-2 rounded-full border border-white dark:border-zinc-900 ${STATUS_DOT[status]}`}
+                        aria-hidden
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-200">
+                        {v.displayName}
+                      </p>
+                      <p className="flex items-center gap-1 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`https://flagcdn.com/w20/${flagCode}.png`}
+                          alt=""
+                          width={14}
+                          height={10}
+                          className="h-2.5 w-3.5 shrink-0 rounded-[1px]"
+                        />
+                        <span className="truncate">{v.path || "/"}</span>
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500">
+                      {formatTimeAgo(v.last_seen)}
+                    </span>
+                    </button>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+          </div>
         </div>
-      </div>
+      )}
 
       {mapViewMode === "2d" && (
         <p className="pointer-events-none absolute bottom-4 left-0 right-0 z-10 text-center text-xs font-semibold text-zinc-500 dark:text-zinc-400">

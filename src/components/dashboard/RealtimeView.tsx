@@ -82,6 +82,7 @@ function RealtimeViewInner({
     parseRealtimeMapMode(searchParams.get("map"))
   );
   const [prefsReady, setPrefsReady] = useState(false);
+  const isSimpleView = searchParams.get("view") === "simple";
 
   useEffect(() => {
     const urlTheme = parseRealtimeTheme(searchParams.get("theme"));
@@ -115,11 +116,15 @@ function RealtimeViewInner({
     const q = new URLSearchParams();
     q.set("theme", next.theme);
     q.set("map", next.map);
+    if (isSimpleView) {
+      q.set("view", "simple");
+    }
     router.replace(`${pathname}?${q.toString()}`, { scroll: false });
   }, [
     prefsReady,
     themeMode,
     mapViewMode,
+    isSimpleView,
     pathname,
     router,
     resolvedTheme,
@@ -280,6 +285,7 @@ function RealtimeViewInner({
         }}
         shareUrl={shareUrl}
         embedCode={embedCode}
+        simpleView={isSimpleView}
       />
     </div>
   );
