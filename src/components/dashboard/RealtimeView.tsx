@@ -221,6 +221,9 @@ function RealtimeViewInner({
   );
 
   const isGlobe = mapViewMode === "globe";
+  const mapContainerClass = isSimpleView
+    ? "absolute inset-x-0 top-[84px] bottom-0 lg:inset-0"
+    : "absolute inset-x-0 top-[190px] bottom-[174px] lg:inset-0";
 
   return (
     <div
@@ -242,7 +245,7 @@ function RealtimeViewInner({
           aria-hidden
         />
       )}
-      <div className="absolute inset-0">
+      <div className={mapContainerClass}>
         {isGlobe ? (
           <VisitorGlobe
             visitors={globeVisitors}

@@ -454,7 +454,9 @@ export function RealtimeOverlay({
         </div>
       </div>
 
-      <div className={`pointer-events-auto mt-4 max-w-sm ${GLASS} p-4`}>
+      <div
+        className={`pointer-events-auto mt-2 w-full max-w-none lg:mt-4 lg:max-w-sm ${GLASS} p-4`}
+      >
         <p className="flex items-center gap-2 text-sm font-medium text-zinc-900 dark:text-white">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
@@ -466,14 +468,14 @@ export function RealtimeOverlay({
 
         {!simpleView && (
           <>
-            <div className="mt-3">
+            <div className="mt-3 hidden lg:block">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 Last 5 min
               </p>
               <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
                 {total5} pageviews · peak {peak.pageviews} @ {peak.label}
               </p>
-              <div className="mt-2 h-12">
+              <div className="mt-2 hidden h-12 lg:block">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={minuteSeries}>
                     <defs>
@@ -510,11 +512,11 @@ export function RealtimeOverlay({
       </div>
 
       {!simpleView && (
-        <div className="pointer-events-none absolute bottom-3 left-3 z-10 w-full max-w-[min(100%,380px)] sm:bottom-5 sm:left-5">
+        <div className="pointer-events-none absolute bottom-3 left-0 right-0 z-10 px-3 sm:bottom-5 sm:px-5 lg:left-3 lg:right-auto lg:w-full lg:max-w-[min(100%,380px)] lg:px-0">
           <div
-            className={`pointer-events-auto max-h-[250px] w-full overflow-hidden ${GLASS}`}
+            className={`pointer-events-auto h-[150px] w-full overflow-hidden lg:h-auto lg:max-h-[250px] ${GLASS}`}
           >
-            <ul className="scrollbar-hide max-h-[250px] overflow-y-auto p-2">
+            <ul className="scrollbar-hide h-[150px] overflow-y-auto p-2 lg:h-auto lg:max-h-[250px]">
             {feed.length === 0 ? (
               <li className="px-2 py-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
                 No activity in the last 5 minutes
@@ -584,12 +586,12 @@ export function RealtimeOverlay({
       )}
 
       {mapViewMode === "2d" && (
-        <p className="pointer-events-none absolute bottom-4 left-0 right-0 z-10 text-center text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+        <p className="pointer-events-none absolute bottom-4 left-0 right-0 z-10 hidden text-center text-xs font-semibold text-zinc-500 dark:text-zinc-400 lg:block">
           Hoang Sa and Truong Sa belong to Vietnam
         </p>
       )}
 
-      <p className="pointer-events-none absolute bottom-4 right-4 text-[10px] text-zinc-400 dark:text-zinc-500">
+      <p className="pointer-events-none absolute bottom-4 right-4 hidden text-[10px] text-zinc-400 dark:text-zinc-500 lg:block">
         Powered by{" "}
         <span className="font-medium text-zinc-500 dark:text-zinc-400">
           Open Analytics
