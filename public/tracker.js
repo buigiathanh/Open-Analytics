@@ -652,11 +652,13 @@
   }
 
   function startTracking() {
+    var shouldTrackPageview = cfg.autoTrack;
+    initGeo(cfg, function () {
+      if (shouldTrackPageview) trackPageview();
+    });
     setupNetworkListeners(cfg);
     setupSpaNavigation();
     setupDeclarativeClicks();
-    if (cfg.autoTrack) trackPageview();
-    initGeo(cfg);
   }
 
   if (isBot()) {

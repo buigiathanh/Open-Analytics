@@ -13,9 +13,13 @@ import {
 import type { BotTimeSeriesPoint } from "@/lib/bot-analytics";
 import { botSeriesMeta } from "@/lib/bot-analytics";
 import type { BotId } from "@/lib/bots";
-import { botIconUrl, PRIMARY_BOT_IDS } from "@/lib/bots";
+import { BOT_OTHER, botIconUrl, PRIMARY_BOT_IDS } from "@/lib/bots";
 
 const DEFAULT_VISIBLE_BOTS = PRIMARY_BOT_IDS;
+
+/** Aggregated visits from bots not individually selected in the picker. */
+const OTHER_BOTS_SERIES_KEY = "_restBots";
+const OTHER_BOTS_LABEL = "Other bots";
 
 function storageKey(siteId: string) {
   return `oa-bot-series-v2-${siteId}`;
@@ -151,6 +155,25 @@ export function BotTrendChart({
   const selectedCount = botIds.filter((id) => visible[id]).length;
   const anyVisible = botIds.some((k) => visible[k]);
 
+  const chartData = useMemo(() => {
+    return series.map((point) => {
+      let rest = 0;
+      for (const id of botIds) {
+        if (!visible[id]) {
+          rest += (point[id] as number) ?? 0;
+        }
+      }
+      return { ...point, [OTHER_BOTS_SERIES_KEY]: rest };
+    });
+  }, [series, botIds, visible]);
+
+  const hasRestData = useMemo(
+    () => chartData.some((p) => (p[OTHER_BOTS_SERIES_KEY] as number) > 0),
+    [chartData]
+  );
+
+  const showChart = anyVisible || hasRestData;
+
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -219,7 +242,7 @@ export function BotTrendChart({
         </div>
       </div>
 
-      {!anyVisible ? (
+      {!showChart ? (
         <div className="flex h-[240px] items-center justify-center text-sm text-zinc-500">
           Select at least one bot to display
         </div>
@@ -227,7 +250,7 @@ export function BotTrendChart({
         <div className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={series}
+              data={chartData}
               margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
             >
               <CartesianGrid
@@ -269,6 +292,19 @@ export function BotTrendChart({
                   />
                 ) : null
               )}
+              {hasRestData ? (
+                <Line
+                  key={OTHER_BOTS_SERIES_KEY}
+                  type="monotone"
+                  dataKey={OTHER_BOTS_SERIES_KEY}
+                  name={OTHER_BOTS_LABEL}
+                  stroke={BOT_OTHER.color}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              ) : null}
             </LineChart>
           </ResponsiveContainer>
         </div>

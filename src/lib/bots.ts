@@ -263,7 +263,10 @@ export function getBotDefinition(id: BotId): BotDefinition {
   return BOT_DEFINITIONS.find((d) => d.id === id) ?? BOT_OTHER;
 }
 
+export const BOT_OTHER_ICON_URL = "/icons/bot.png";
+
 export function botIconUrl(id: BotId): string {
+  if (id === "other") return BOT_OTHER_ICON_URL;
   const def = getBotDefinition(id);
   if (!def.iconDomain) return "/icons/globe.png";
   return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(def.iconDomain)}.ico`;
