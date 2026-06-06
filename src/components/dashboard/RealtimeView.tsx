@@ -5,18 +5,8 @@ import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useRealtimeSocket } from "@/hooks/useRealtimeSocket";
-import {
-  REALTIME_CHART_MINUTES,
-  REALTIME_WINDOW_MS,
-} from "@/lib/constants";
-import {
-  buildMinuteSeries,
-  getLiveFeed,
-  liveBreakdownBy,
-} from "@/lib/analytics";
-import { countryFlagUrl } from "@/lib/breakdown-icons";
-import { countryName, referrerHost } from "@/lib/countries";
-import { DEVICE_LABEL } from "@/lib/constants";
+import { REALTIME_WINDOW_MS } from "@/lib/constants";
+import { getLiveFeed } from "@/lib/analytics";
 import { liveFeedToGlobeVisitors } from "@/lib/live-to-globe";
 import {
   buildRealtimeShareUrl,
@@ -26,6 +16,7 @@ import {
   realtimeUrlMatches,
   type RealtimeMapMode,
 } from "@/lib/realtime-url";
+import { RealtimeFeedSidebar } from "./RealtimeFeedSidebar";
 import { RealtimeOverlay } from "./RealtimeOverlay";
 import type { AnalyticsEvent, Site } from "@/lib/types";
 
@@ -180,24 +171,6 @@ function RealtimeViewInner({
     () => getLiveFeed(events, REALTIME_WINDOW_MS),
     [events]
   );
-  const minuteSeries = useMemo(
-    () => buildMinuteSeries(events, REALTIME_CHART_MINUTES),
-    [events]
-  );
-
-  const referrers = liveBreakdownBy(feed, (e) => ({
-    key: e.source || referrerHost(e.referrer),
-    label: e.source?.trim() || referrerHost(e.referrer) || "Direct",
-  }));
-  const countries = liveBreakdownBy(feed, (e) => ({
-    key: e.country_code || "??",
-    label: countryName(e.country_code),
-    iconUrl: countryFlagUrl(e.country_code),
-  }));
-  const devices = liveBreakdownBy(feed, (e) => ({
-    key: String(e.device ?? 0),
-    label: DEVICE_LABEL[e.device ?? 0],
-  }));
 
   const globeVisitors = useMemo(
     () => liveFeedToGlobeVisitors(feed),
@@ -205,75 +178,76 @@ function RealtimeViewInner({
   );
 
   const isGlobe = mapViewMode === "globe";
-  const mapContainerClass = isSimpleView
-    ? "absolute inset-x-0 top-[84px] bottom-0 lg:inset-0"
-    : "absolute inset-x-0 top-[190px] bottom-[174px] lg:inset-0";
 
   return (
-    <div
-      className={
-        isGlobe
-          ? "relative h-full w-full overflow-hidden bg-gradient-to-b from-sky-50 via-zinc-50 to-zinc-100 dark:from-[#0d1424] dark:via-[#121c2e] dark:to-[#0f172a]"
-          : "relative h-full w-full overflow-hidden bg-zinc-100 dark:bg-zinc-950"
-      }
-    >
-      {isGlobe && (
-        <div
-          className="pointer-events-none absolute inset-0 hidden opacity-40 dark:block"
-          style={{
-            backgroundImage: `radial-gradient(1px 1px at 20px 30px, #fff, transparent),
-            radial-gradient(1px 1px at 80px 120px, rgba(255,255,255,0.6), transparent),
-            radial-gradient(1px 1px at 160px 80px, rgba(255,255,255,0.4), transparent)`,
-            backgroundSize: "200px 200px",
-          }}
-          aria-hidden
+    <div className="flex h-full w-full overflow-hidden">
+      {!isSimpleView && (
+        <RealtimeFeedSidebar
+          feed={feed}
+          selectedVisitorId={selectedVisitorId}
+          onSelectVisitor={setSelectedVisitorId}
         />
       )}
-      <div className={mapContainerClass}>
-        {isGlobe ? (
-          <VisitorGlobe
-            visitors={globeVisitors}
-            variant="immersive"
-            selectedVisitorId={selectedVisitorId}
-            onSelectedVisitorChange={setSelectedVisitorId}
-            isRotating={isRotating}
-            onRotatingChange={setIsRotating}
-            hidePlaybackControl
-          />
-        ) : (
-          <RealtimeVisitorMap
-            visitors={globeVisitors}
-            selectedVisitorId={selectedVisitorId}
-            onSelectedVisitorChange={setSelectedVisitorId}
+
+      <div
+        className={
+          isGlobe
+            ? "relative flex min-w-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-sky-50 via-zinc-50 to-zinc-100 dark:from-[#0d1424] dark:via-[#121c2e] dark:to-[#0f172a]"
+            : "relative flex min-w-0 flex-1 flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950"
+        }
+      >
+        {isGlobe && (
+          <div
+            className="pointer-events-none absolute inset-0 hidden opacity-40 dark:block"
+            style={{
+              backgroundImage: `radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+            radial-gradient(1px 1px at 80px 120px, rgba(255,255,255,0.6), transparent),
+            radial-gradient(1px 1px at 160px 80px, rgba(255,255,255,0.4), transparent)`,
+              backgroundSize: "200px 200px",
+            }}
+            aria-hidden
           />
         )}
+
+        <RealtimeOverlay
+          site={site}
+          mode={mode}
+          shareRealtimeEnabled={shareRealtimeEnabled}
+          liveCount={feed.length}
+          mapViewMode={mapViewMode}
+          onMapViewModeChange={setMapViewMode}
+          isRotating={isRotating}
+          onToggleRotating={() => {
+            setIsRotating((r) => {
+              const next = !r;
+              if (next) setSelectedVisitorId(null);
+              return next;
+            });
+          }}
+          shareUrl={shareUrl}
+          embedCode={embedCode}
+        />
+
+        <div className="relative min-h-0 flex-1">
+          {isGlobe ? (
+            <VisitorGlobe
+              visitors={globeVisitors}
+              variant="immersive"
+              selectedVisitorId={selectedVisitorId}
+              onSelectedVisitorChange={setSelectedVisitorId}
+              isRotating={isRotating}
+              onRotatingChange={setIsRotating}
+              hidePlaybackControl
+            />
+          ) : (
+            <RealtimeVisitorMap
+              visitors={globeVisitors}
+              selectedVisitorId={selectedVisitorId}
+              onSelectedVisitorChange={setSelectedVisitorId}
+            />
+          )}
+        </div>
       </div>
-      <RealtimeOverlay
-        site={site}
-        mode={mode}
-        shareRealtimeEnabled={shareRealtimeEnabled}
-        liveCount={feed.length}
-        minuteSeries={minuteSeries}
-        referrers={referrers}
-        countries={countries}
-        devices={devices}
-        feed={feed}
-        selectedVisitorId={selectedVisitorId}
-        onSelectVisitor={setSelectedVisitorId}
-        mapViewMode={mapViewMode}
-        onMapViewModeChange={setMapViewMode}
-        isRotating={isRotating}
-        onToggleRotating={() => {
-          setIsRotating((r) => {
-            const next = !r;
-            if (next) setSelectedVisitorId(null);
-            return next;
-          });
-        }}
-        shareUrl={shareUrl}
-        embedCode={embedCode}
-        simpleView={isSimpleView}
-      />
     </div>
   );
 }

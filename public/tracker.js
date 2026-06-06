@@ -24,7 +24,6 @@
   var STORAGE_DISTINCT = "oa_distinct_id";
   var STORAGE_GEO = "oa_geo";
   var SESSION_TIMEOUT_MS = 30 * 60 * 1000;
-  var GEO_GPS_MAX_AGE_MS = 30 * 60 * 1000;
 
   var EVENT = { PAGEVIEW: 1, PAGE_LEAVE: 2, CUSTOM: 10 };
   var DEVICE = { UNKNOWN: 0, DESKTOP: 1, MOBILE: 2, TABLET: 3, TV: 4 };
@@ -275,44 +274,17 @@
     }
   }
 
-  var geoCache = { lat: null, lng: null, country_code: null, ready: false };
+  var geoCache = {
+    ip: null,
+    lat: null,
+    lng: null,
+    country_code: null,
+    ready: false,
+  };
   var geoFetching = false;
   var lastNetworkKey = null;
   var GEO_FETCH_MS = 5000;
-
-  var GEO_PROVIDERS = [
-    {
-      url: "https://ipwho.is/",
-      parse: function (d) {
-        if (d && d.success === false) return null;
-        return {
-          lat: d.latitude,
-          lng: d.longitude,
-          country_code: d.country_code,
-        };
-      },
-    },
-    {
-      url: "https://get.geojs.io/v1/ip/geo.json",
-      parse: function (d) {
-        return {
-          lat: d.latitude != null ? parseFloat(d.latitude) : null,
-          lng: d.longitude != null ? parseFloat(d.longitude) : null,
-          country_code: d.country_code,
-        };
-      },
-    },
-    {
-      url: "https://reallyfreegeoip.org/json/",
-      parse: function (d) {
-        return {
-          lat: d.latitude,
-          lng: d.longitude,
-          country_code: d.country_code,
-        };
-      },
-    },
-  ];
+  var GEO_URL = "https://geo.geosurf.io/";
 
   function normalizeCountryCode(code) {
     if (code == null || code === "") return null;
@@ -340,6 +312,7 @@
     var lat = result.lat != null ? Number(result.lat) : null;
     var lng = result.lng != null ? Number(result.lng) : null;
     if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return false;
+    geoCache.ip = result.ip != null ? String(result.ip).slice(0, 45) : null;
     geoCache.lat = lat;
     geoCache.lng = lng;
     geoCache.country_code = normalizeCountryCode(result.country_code);
@@ -347,12 +320,19 @@
     return true;
   }
 
+  function clearGeoStorage() {
+    try {
+      sessionStorage.removeItem(STORAGE_GEO);
+    } catch (e) {}
+  }
+
   function saveGeoToStorage(networkKey) {
     try {
-      localStorage.setItem(
+      sessionStorage.setItem(
         STORAGE_GEO,
         JSON.stringify({
           network_key: networkKey,
+          ip: geoCache.ip,
           lat: geoCache.lat,
           lng: geoCache.lng,
           country_code: geoCache.country_code,
@@ -364,11 +344,12 @@
 
   function loadGeoFromStorage(networkKey) {
     try {
-      var raw = localStorage.getItem(STORAGE_GEO);
+      var raw = sessionStorage.getItem(STORAGE_GEO);
       if (!raw) return false;
       var stored = JSON.parse(raw);
       if (!stored || stored.network_key !== networkKey) return false;
       if (stored.lat == null || stored.lng == null) return false;
+      geoCache.ip = stored.ip != null ? String(stored.ip).slice(0, 45) : null;
       geoCache.lat = Number(stored.lat);
       geoCache.lng = Number(stored.lng);
       geoCache.country_code = normalizeCountryCode(stored.country_code);
@@ -379,29 +360,20 @@
     }
   }
 
-  function parseGenericGeo(data) {
+  function parseGeosurfGeo(data) {
     if (!data || typeof data !== "object") return null;
+    var loc = data.loc;
+    var lng = null;
+    var lat = null;
+    if (Array.isArray(loc) && loc.length >= 2) {
+      lng = loc[0];
+      lat = loc[1];
+    }
     return {
-      lat:
-        data.latitude != null
-          ? data.latitude
-          : data.lat != null
-            ? data.lat
-            : null,
-      lng:
-        data.longitude != null
-          ? data.longitude
-          : data.lon != null
-            ? data.lon
-            : data.lng != null
-              ? data.lng
-              : null,
-      country_code:
-        data.country_code != null
-          ? data.country_code
-          : data.countryCode != null
-            ? data.countryCode
-            : null,
+      ip: data.ip != null ? data.ip : null,
+      lat: lat,
+      lng: lng,
+      country_code: data.country != null ? data.country : null,
     };
   }
 
@@ -436,83 +408,20 @@
     });
   }
 
-  function tryGeoProvider(provider, callback) {
-    fetchJsonWithTimeout(provider.url, GEO_FETCH_MS)
+  function fetchGeoIp(cfg, callback) {
+    fetchJsonWithTimeout(GEO_URL, GEO_FETCH_MS)
       .then(function (data) {
-        var parsed = provider.parse
-          ? provider.parse(data)
-          : parseGenericGeo(data);
-        if (applyGeoResult(parsed)) {
+        if (applyGeoResult(parseGeosurfGeo(data))) {
           callback(geoCache);
         } else {
-          callback(null);
+          geoCache.ready = true;
+          callback(geoCache);
         }
       })
       .catch(function () {
-        callback(null);
+        geoCache.ready = true;
+        callback(geoCache);
       });
-  }
-
-  function tryGeoProvidersChain(providers, index, done) {
-    if (index >= providers.length) {
-      geoCache.ready = true;
-      done(geoCache);
-      return;
-    }
-    tryGeoProvider(providers[index], function (ok) {
-      if (ok) {
-        done(geoCache);
-      } else {
-        tryGeoProvidersChain(providers, index + 1, done);
-      }
-    });
-  }
-
-  function fetchGeoIp(cfg, callback) {
-    tryGeoProvidersChain(GEO_PROVIDERS, 0, callback);
-  }
-
-  function tryGeolocationThenIp(cfg, callback) {
-    if (!navigator.geolocation) {
-      fetchGeoIp(cfg, callback);
-      return;
-    }
-
-    function useGps() {
-      navigator.geolocation.getCurrentPosition(
-        function (pos) {
-          applyGeoResult({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            country_code: geoCache.country_code,
-          });
-          callback(geoCache);
-        },
-        function () {
-          fetchGeoIp(cfg, callback);
-        },
-        { timeout: 4000, maximumAge: GEO_GPS_MAX_AGE_MS }
-      );
-    }
-
-    // Only use GPS when permission is already granted — never trigger the browser prompt.
-    if (navigator.permissions && navigator.permissions.query) {
-      navigator.permissions
-        .query({ name: "geolocation" })
-        .then(function (result) {
-          if (result.state === "granted") {
-            useGps();
-          } else {
-            fetchGeoIp(cfg, callback);
-          }
-        })
-        .catch(function () {
-          fetchGeoIp(cfg, callback);
-        });
-      return;
-    }
-
-    fetchGeoIp(cfg, callback);
   }
 
   function refreshGeo(cfg, callback) {
@@ -520,7 +429,7 @@
     geoFetching = true;
     var networkKey = getNetworkKey();
     lastNetworkKey = networkKey;
-    tryGeolocationThenIp(cfg, function () {
+    fetchGeoIp(cfg, function () {
       geoFetching = false;
       if (geoCache.lat != null && geoCache.lng != null) {
         saveGeoToStorage(networkKey);
@@ -548,10 +457,12 @@
       var newKey = getNetworkKey();
       if (newKey === lastNetworkKey) return;
       lastNetworkKey = newKey;
+      geoCache.ip = null;
       geoCache.lat = null;
       geoCache.lng = null;
       geoCache.country_code = null;
       geoCache.ready = false;
+      clearGeoStorage();
       refreshGeo(cfg);
     }
     global.addEventListener("online", onNetworkMaybeChanged);

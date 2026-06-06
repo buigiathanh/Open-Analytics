@@ -5,6 +5,7 @@ import { MetricBar } from "@/components/dashboard/MetricBar";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { BreakdownPanel } from "@/components/dashboard/BreakdownPanel";
 import { CountryStatsBlock } from "@/components/dashboard/CountryStatsBlock";
+import { CustomEventsBlock } from "@/components/dashboard/CustomEventsBlock";
 import { LivePill } from "@/components/dashboard/LivePill";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import type { DashboardAnalytics } from "@/lib/analytics";
@@ -94,6 +95,14 @@ export function SiteDashboard({
           ]}
         />
       </div>
+
+      <CustomEventsBlock
+        total={analytics.customEventTotal}
+        periodDays={analytics.periodDays}
+        breakdown={analytics.customEvents}
+        series={analytics.customEventSeries}
+        recent={analytics.customEventRecent}
+      />
 
       <LivePill siteId={site.id} count={analytics.liveCount} />
     </div>

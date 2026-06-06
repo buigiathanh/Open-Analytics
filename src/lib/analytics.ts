@@ -56,8 +56,26 @@ export interface DashboardAnalytics {
   screens: BreakdownRow[];
   utmSources: BreakdownRow[];
   utmCampaigns: BreakdownRow[];
+  customEvents: BreakdownRow[];
+  customEventSeries: CustomEventSeriesPoint[];
+  customEventRecent: CustomEventRecentItem[];
+  customEventTotal: number;
   liveCount: number;
   periodDays: number;
+}
+
+export interface CustomEventSeriesPoint {
+  date: string;
+  label: string;
+  count: number;
+}
+
+export interface CustomEventRecentItem {
+  id: number;
+  event_name: string;
+  path: string | null;
+  source: string | null;
+  created_at: string;
 }
 
 export interface LiveFeedItem extends LiveVisitor {
@@ -72,6 +90,10 @@ const DAY_MS = 86400000;
 
 function pageviews(events: AnalyticsEvent[]) {
   return events.filter((e) => e.event_type === EVENT_TYPE.PAGEVIEW);
+}
+
+function customEvents(events: AnalyticsEvent[]) {
+  return events.filter((e) => e.event_type === EVENT_TYPE.CUSTOM);
 }
 
 function uniqueVisitors(pv: AnalyticsEvent[]) {
@@ -375,6 +397,60 @@ export function buildUtmCampaignBreakdown(events: AnalyticsEvent[]): BreakdownRo
   return aggregateCounts(items, items.length);
 }
 
+export function buildCustomEventBreakdown(events: AnalyticsEvent[]): BreakdownRow[] {
+  const items = customEvents(events).map((e) => {
+    const label = e.event_name?.trim() || "(unnamed)";
+    return { key: label, label };
+  });
+  return aggregateCounts(items, items.length);
+}
+
+export function buildCustomEventTimeSeries(
+  events: AnalyticsEvent[],
+  days = 7
+): CustomEventSeriesPoint[] {
+  const ce = customEvents(events);
+  const buckets: CustomEventSeriesPoint[] = [];
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    const count = ce.filter((e) => {
+      const t = new Date(e.created_at);
+      return t >= d && t < next;
+    }).length;
+    buckets.push({
+      date: d.toISOString().slice(0, 10),
+      label: formatShortDayLabel(d.toISOString().slice(0, 10)),
+      count,
+    });
+  }
+  return buckets;
+}
+
+export function buildCustomEventRecent(
+  events: AnalyticsEvent[],
+  limit = 25
+): CustomEventRecentItem[] {
+  return customEvents(events)
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+    .slice(0, limit)
+    .map((e) => ({
+      id: e.id,
+      event_name: e.event_name?.trim() || "(unnamed)",
+      path: e.path,
+      source: e.source,
+      created_at: e.created_at,
+    }));
+}
+
 export function buildDashboardAnalytics(
   events: AnalyticsEvent[],
   liveWindowMs: number,
@@ -450,6 +526,10 @@ export function buildDashboardAnalytics(
     screens: buildScreenBreakdown(current),
     utmSources: buildUtmSourceBreakdown(current),
     utmCampaigns: buildUtmCampaignBreakdown(current),
+    customEvents: buildCustomEventBreakdown(current),
+    customEventSeries: buildCustomEventTimeSeries(periodEvents, days),
+    customEventRecent: buildCustomEventRecent(current),
+    customEventTotal: customEvents(current).length,
     liveCount: live.length,
   };
 }
