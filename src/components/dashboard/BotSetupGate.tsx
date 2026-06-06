@@ -15,7 +15,7 @@ export function BotSetupGate({ site, hasBotTracking }: BotSetupGateProps) {
   if (hasBotTracking) return null;
 
   function handleClose() {
-    router.push("/app");
+    router.push(`/app/${site.id}`);
   }
 
   return (
@@ -37,14 +37,14 @@ export function BotSetupGate({ site, hasBotTracking }: BotSetupGateProps) {
             <p className="mt-1 text-sm text-zinc-500">
               Add the snippet below to your site&apos;s middleware or proxy to
               start tracking crawlers and AI bots. Verify when ready — or close
-              to return to your websites.
+              to return to Stats.
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
             className="shrink-0 rounded-lg border border-zinc-200 p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-            aria-label="Close and return to websites"
+            aria-label="Close and return to Stats"
           >
             <svg
               className="size-5"
