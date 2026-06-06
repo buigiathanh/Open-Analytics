@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { ingestBotVisit } from "@/lib/bot-ingest";
 import { SITE_API_KEY_HEADER } from "@/lib/constants";
-import { insertBotVisit } from "@/lib/db/bot-visits";
 import { isPostgresConfigured } from "@/lib/db/config";
 import { insertEvent } from "@/lib/db/events";
 import {
@@ -11,7 +11,10 @@ import {
   verifySiteForBotVisit,
   verifySiteForEvent,
 } from "@/lib/event-ingest";
-import { broadcastAnalyticsEvent } from "@/lib/realtime-broadcast";
+import {
+  broadcastAnalyticsEvent,
+  broadcastBotVisit,
+} from "@/lib/realtime-broadcast";
 
 function corsHeaders(request: Request): HeadersInit {
   const origin = request.headers.get("Origin");
@@ -81,7 +84,13 @@ export async function POST(request: Request) {
     }
 
     try {
-      await insertBotVisit({ ...validated.payload, ip });
+      const result = await ingestBotVisit(validated.payload, ip);
+      if (!result.ok) {
+        return jsonWithCors(request, { error: result.message }, result.status);
+      }
+      if (!result.isVerification) {
+        broadcastBotVisit(siteCheck.siteId, result.visit);
+      }
       return jsonWithCors(request, { ok: true });
     } catch (err) {
       console.error("[events] bot visit insert failed", err);

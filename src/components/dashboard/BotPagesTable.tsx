@@ -32,18 +32,28 @@ function pageUrl(site: Site, path: string): string {
   return `https://${domain}${p}`;
 }
 
-function BotIcon({ id, size = 20 }: { id: BotId; size?: number }) {
-  const label = getBotDefinition(id).label;
+function BotBadge({ id, compact }: { id: BotId; compact?: boolean }) {
+  const def = getBotDefinition(id);
   return (
-    <img
-      src={botIconUrl(id)}
-      alt={label}
-      width={size}
-      height={size}
-      title={label}
-      className="size-5 shrink-0 rounded object-contain"
-      loading="lazy"
-    />
+    <span
+      className={
+        compact
+          ? "inline-flex max-w-[9rem] items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+          : "inline-flex max-w-[10rem] items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+      }
+      title={def.label}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={botIconUrl(id)}
+        alt=""
+        width={14}
+        height={14}
+        className="size-3.5 shrink-0 rounded-sm object-contain"
+        loading="lazy"
+      />
+      <span className="truncate">{def.label}</span>
+    </span>
   );
 }
 
@@ -78,12 +88,8 @@ function BotOverflowBadge({ overflow }: { overflow: BotId[] }) {
           >
             <ul className="space-y-1.5">
               {overflow.map((id) => (
-                <li
-                  key={id}
-                  className="flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300"
-                >
-                  <BotIcon id={id} />
-                  <span>{getBotDefinition(id).label}</span>
+                <li key={id}>
+                  <BotBadge id={id} compact />
                 </li>
               ))}
             </ul>
@@ -121,11 +127,9 @@ function BotIconsCell({ botIds }: { botIds: BotId[] }) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex max-w-[320px] flex-wrap items-center gap-1.5">
       {visible.map((id) => (
-        <span key={id} className="inline-flex">
-          <BotIcon id={id} />
-        </span>
+        <BotBadge key={id} id={id} />
       ))}
       {overflow.length > 0 && <BotOverflowBadge overflow={overflow} />}
     </div>

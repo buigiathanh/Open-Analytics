@@ -11,8 +11,9 @@ import {
 import { classifyChannel } from "./channels";
 import { countryName, referrerHost } from "./countries";
 import { computeStats, getLiveVisitors, getVisitPageviews } from "./stats";
+import { botCeoIdentity, botIconUrl, getBotDefinition, type BotId } from "./bots";
 import { visitorAvatarUrl, visitorDisplayName } from "./visitor-identity";
-import type { AnalyticsEvent, LiveVisitor, SiteStats } from "./types";
+import type { AnalyticsEvent, BotVisit, LiveVisitor, SiteStats } from "./types";
 
 export interface MetricWithTrend {
   value: number | string;
@@ -84,6 +85,10 @@ export interface LiveFeedItem extends LiveVisitor {
   referrer: string | null;
   displayName: string;
   avatar: string;
+  isBot?: boolean;
+  botId?: BotId;
+  botLabel?: string;
+  botIconUrl?: string;
 }
 
 const DAY_MS = 86400000;
@@ -596,6 +601,58 @@ export function getLiveFeed(
       (a, b) =>
         new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime()
     );
+}
+
+export function botVisitToFeedItem(visit: BotVisit): LiveFeedItem {
+  const def = getBotDefinition(visit.bot_id);
+  const iconUrl = botIconUrl(visit.bot_id);
+  const ceo = botCeoIdentity(visit.bot_id);
+  return {
+    visitor_id: `bot:${visit.id}`,
+    session_id: `bot:${visit.id}`,
+    visit_id: null,
+    path: visit.path,
+    country_code: null,
+    latitude: null,
+    longitude: null,
+    device: null,
+    last_seen: visit.created_at,
+    browser: null,
+    source: null,
+    referrer: null,
+    displayName: ceo.name,
+    avatar: ceo.avatar,
+    isBot: true,
+    botId: visit.bot_id,
+    botLabel: def.label,
+    botIconUrl: iconUrl,
+  };
+}
+
+export function getLiveFeedFromBotVisits(
+  visits: BotVisit[],
+  windowMs: number
+): LiveFeedItem[] {
+  const cutoff = Date.now() - windowMs;
+  return visits
+    .filter((v) => new Date(v.created_at).getTime() >= cutoff)
+    .map(botVisitToFeedItem)
+    .sort(
+      (a, b) =>
+        new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime()
+    );
+}
+
+export function mergeLiveFeed(
+  events: AnalyticsEvent[],
+  botVisits: BotVisit[],
+  windowMs: number
+): LiveFeedItem[] {
+  const human = getLiveFeed(events, windowMs);
+  const bots = getLiveFeedFromBotVisits(botVisits, windowMs);
+  return [...human, ...bots].sort(
+    (a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime()
+  );
 }
 
 export function liveBreakdownBy(

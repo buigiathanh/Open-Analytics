@@ -10,6 +10,7 @@ import {
 } from "@/lib/bots";
 import type { BotVisitInsertPayload } from "@/lib/db/bot-visits";
 import { insertBotVisit } from "@/lib/db/bot-visits";
+import type { BotVisit } from "@/lib/types";
 import {
   extractVerifyToken,
   isVerifyUserAgent,
@@ -67,6 +68,7 @@ export type BotVisitIngestOutcome =
       botId: BotId;
       ipVerified: boolean;
       isVerification: boolean;
+      visit: BotVisit;
     }
   | { ok: false; message: string; status: number };
 
@@ -78,7 +80,7 @@ export async function ingestBotVisit(
   const ua = payload.user_agent.trim();
 
   if (isVerifyUserAgent(ua)) {
-    await insertBotVisit({
+    const visit = await insertBotVisit({
       ...payload,
       ip,
       bot_id: "other",
@@ -107,6 +109,7 @@ export async function ingestBotVisit(
       botId: "other",
       ipVerified: false,
       isVerification: true,
+      visit,
     };
   }
 
@@ -119,7 +122,7 @@ export async function ingestBotVisit(
     };
   }
 
-  await insertBotVisit({
+  const visit = await insertBotVisit({
     ...payload,
     ip,
     bot_id: botCheck.botId,
@@ -130,5 +133,6 @@ export async function ingestBotVisit(
     botId: botCheck.botId,
     ipVerified: botCheck.ipVerified ?? false,
     isVerification: false,
+    visit,
   };
 }

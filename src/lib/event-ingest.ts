@@ -174,7 +174,7 @@ export async function verifySiteForBotVisit(
   request: Request,
   payload: BotVisitInsertPayload,
   opts?: { requireApiKeyHeader?: boolean }
-): Promise<{ ok: true } | { ok: false; message: string }> {
+): Promise<{ ok: true; siteId: string } | { ok: false; message: string }> {
   const headerKey = siteApiKeyFromRequest(request);
   const project = await getProjectBySiteKey(payload.site_key);
 
@@ -188,7 +188,7 @@ export async function verifySiteForBotVisit(
     if (!project.api_key || project.api_key !== headerKey) {
       return { ok: false, message: "Invalid API key" };
     }
-    return { ok: true };
+    return { ok: true, siteId: project.id };
   }
 
   if (headerKey && project?.api_key && headerKey !== project.api_key) {
@@ -198,7 +198,7 @@ export async function verifySiteForBotVisit(
   if (!project) {
     return { ok: false, message: "Unknown site" };
   }
-  return { ok: true };
+  return { ok: true, siteId: project.id };
 }
 
 /** Reject unknown site_key and hostname/domain mismatch (anti-spam). */

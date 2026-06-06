@@ -1,10 +1,18 @@
 import { REALTIME_WINDOW_MS } from "@/lib/constants";
+import { fetchBotVisitsForSite } from "@/lib/db/bot-visits";
 import { fetchEventsForSite } from "@/lib/db/events";
-import type { AnalyticsEvent, Site } from "@/lib/types";
+import type { AnalyticsEvent, BotVisit, Site } from "@/lib/types";
 
 export async function fetchRecentRealtimeEvents(
   site: Site
 ): Promise<AnalyticsEvent[]> {
   const since = new Date(Date.now() - REALTIME_WINDOW_MS).toISOString();
   return fetchEventsForSite(site.site_key, { since, limit: 500 });
+}
+
+export async function fetchRecentRealtimeBotVisits(
+  site: Site
+): Promise<BotVisit[]> {
+  const since = new Date(Date.now() - REALTIME_WINDOW_MS).toISOString();
+  return fetchBotVisitsForSite(site.site_key, { since, limit: 200 });
 }

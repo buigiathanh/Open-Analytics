@@ -8,6 +8,7 @@ import {
   validateBotVisitPayload,
   verifySiteForBotVisit,
 } from "@/lib/event-ingest";
+import { broadcastBotVisit } from "@/lib/realtime-broadcast";
 
 function corsHeaders(request: Request): HeadersInit {
   const origin = request.headers.get("Origin");
@@ -74,6 +75,9 @@ export async function POST(request: Request) {
     const result = await ingestBotVisit(validated.payload, botIp);
     if (!result.ok) {
       return jsonWithCors(request, { error: result.message }, result.status);
+    }
+    if (!result.isVerification) {
+      broadcastBotVisit(siteCheck.siteId, result.visit);
     }
     return jsonWithCors(request, {
       ok: true,

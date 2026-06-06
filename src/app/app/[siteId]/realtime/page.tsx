@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { SetupBanner } from "@/components/SetupBanner";
 import { RealtimeView } from "@/components/dashboard/RealtimeView";
-import { fetchRecentRealtimeEvents } from "@/lib/realtime-events";
+import { fetchRecentRealtimeBotVisits, fetchRecentRealtimeEvents } from "@/lib/realtime-events";
 import { getRegistryUser, getSiteForUser } from "@/lib/registry-sites";
 import { isPostgresConfigured } from "@/lib/db/config";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -30,12 +30,14 @@ export default async function RealtimePage({ params }: PageProps) {
   if (!siteRow) notFound();
 
   const events = await fetchRecentRealtimeEvents(siteRow);
+  const botVisits = await fetchRecentRealtimeBotVisits(siteRow);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
       <RealtimeView
         site={siteRow}
         initialEvents={events}
+        initialBotVisits={botVisits}
         mode="owner"
         shareRealtimeEnabled={siteRow.share_realtime_enabled ?? false}
       />

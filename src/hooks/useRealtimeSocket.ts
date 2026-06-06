@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { AnalyticsEvent } from "@/lib/types";
+import type { AnalyticsEvent, BotVisit } from "@/lib/types";
 
 function wsUrl(siteId: string): string {
   const base =
@@ -13,12 +13,22 @@ function wsUrl(siteId: string): string {
   return `${protocol}//${parsed.host}/api/realtime/ws?site_id=${encodeURIComponent(siteId)}`;
 }
 
+export type RealtimeSocketHandlers = {
+  onEvent?: (event: AnalyticsEvent) => void;
+  onBotVisit?: (visit: BotVisit) => void;
+};
+
 export function useRealtimeSocket(
   siteId: string,
-  onEvent: (event: AnalyticsEvent) => void
+  onEventOrHandlers:
+    | ((event: AnalyticsEvent) => void)
+    | RealtimeSocketHandlers
 ): void {
-  const onEventRef = useRef(onEvent);
-  onEventRef.current = onEvent;
+  const handlersRef = useRef<RealtimeSocketHandlers>({});
+  handlersRef.current =
+    typeof onEventOrHandlers === "function"
+      ? { onEvent: onEventOrHandlers }
+      : onEventOrHandlers;
 
   useEffect(() => {
     let ws: WebSocket | null = null;
@@ -38,10 +48,12 @@ export function useRealtimeSocket(
         try {
           const msg = JSON.parse(ev.data as string) as {
             type?: string;
-            data?: AnalyticsEvent;
+            data?: AnalyticsEvent | BotVisit;
           };
           if (msg.type === "event" && msg.data) {
-            onEventRef.current(msg.data);
+            handlersRef.current.onEvent?.(msg.data as AnalyticsEvent);
+          } else if (msg.type === "bot_visit" && msg.data) {
+            handlersRef.current.onBotVisit?.(msg.data as BotVisit);
           }
         } catch {
           /* ignore malformed */

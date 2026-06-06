@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { RealtimeView } from "@/components/dashboard/RealtimeView";
-import { fetchRecentRealtimeEvents } from "@/lib/realtime-events";
+import { fetchRecentRealtimeBotVisits, fetchRecentRealtimeEvents } from "@/lib/realtime-events";
 import { getSiteForPublicShare } from "@/lib/registry-sites";
 import { isPostgresConfigured } from "@/lib/db/config";
 
@@ -18,10 +18,16 @@ export default async function PublicRealtimeSharePage({ params }: PageProps) {
   if (!site) notFound();
 
   const events = await fetchRecentRealtimeEvents(site);
+  const botVisits = await fetchRecentRealtimeBotVisits(site);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <RealtimeView site={site} initialEvents={events} mode="public" />
+      <RealtimeView
+        site={site}
+        initialEvents={events}
+        initialBotVisits={botVisits}
+        mode="public"
+      />
     </div>
   );
 }

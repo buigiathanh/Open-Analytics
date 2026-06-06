@@ -36,6 +36,13 @@ export const PRIMARY_BOT_IDS: BotId[] = [
 
 const MAX_VISIBLE_PAGE_BOTS = 4;
 
+/** Local CEO portraits under public/bots/ceos/. */
+export const BOT_CEO_AVATAR_DIR = "/bots/ceos";
+
+function localCeoAvatar(id: string, ext: string): string {
+  return `${BOT_CEO_AVATAR_DIR}/${id}.${ext}`;
+}
+
 export function partitionPageBots(botIds: BotId[]): {
   visible: BotId[];
   overflow: BotId[];
@@ -57,6 +64,10 @@ export interface BotDefinition {
   iconDomain: string;
   color: string;
   pattern: RegExp;
+  /** Public face shown in realtime feed (CEO / founder). */
+  ceoName: string;
+  /** Portrait URL — local file under public/bots/ceos/. */
+  ceoAvatar: string;
 }
 
 export const BOT_DEFINITIONS: BotDefinition[] = [
@@ -66,6 +77,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "google.com",
     color: "#4285F4",
     pattern: /googlebot|google-inspectiontool|adsbot-google|mediapartners-google/i,
+    ceoName: "Sundar Pichai",
+    ceoAvatar: localCeoAvatar("google", "png"),
   },
   {
     id: "bing",
@@ -73,6 +86,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "bing.com",
     color: "#008373",
     pattern: /bingbot|msnbot|bingpreview/i,
+    ceoName: "Satya Nadella",
+    ceoAvatar: localCeoAvatar("bing", "jpg"),
   },
   {
     id: "ahrefs",
@@ -80,6 +95,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "ahrefs.com",
     color: "#FF7A59",
     pattern: /ahrefsbot/i,
+    ceoName: "Dmytro Gerasymenko",
+    ceoAvatar: localCeoAvatar("ahrefs", "jpg"),
   },
   {
     id: "semrush",
@@ -87,6 +104,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "semrush.com",
     color: "#FF642D",
     pattern: /semrushbot/i,
+    ceoName: "Oleg Shchegolev",
+    ceoAvatar: localCeoAvatar("semrush", "jpg"),
   },
   {
     id: "apple",
@@ -94,6 +113,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "apple.com",
     color: "#555555",
     pattern: /applebot/i,
+    ceoName: "Tim Cook",
+    ceoAvatar: localCeoAvatar("apple", "webp"),
   },
   {
     id: "chatgpt",
@@ -101,6 +122,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "openai.com",
     color: "#10A37F",
     pattern: /gptbot|chatgpt-user|oai-searchbot/i,
+    ceoName: "Sam Altman",
+    ceoAvatar: localCeoAvatar("chatgpt", "jpg"),
   },
   {
     id: "claude",
@@ -108,6 +131,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "anthropic.com",
     color: "#D97757",
     pattern: /claudebot|claude-user|claude-searchbot|anthropic-ai/i,
+    ceoName: "Dario Amodei",
+    ceoAvatar: localCeoAvatar("claude", "jpg"),
   },
   {
     id: "perplexity",
@@ -115,6 +140,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "perplexity.ai",
     color: "#20B8CD",
     pattern: /perplexitybot|perplexity-user/i,
+    ceoName: "Aravind Srinivas",
+    ceoAvatar: localCeoAvatar("perplexity", "jpg"),
   },
   {
     id: "mistral",
@@ -122,6 +149,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "mistral.ai",
     color: "#FA520A",
     pattern: /mistralai-user|mistralai-index/i,
+    ceoName: "Arthur Mensch",
+    ceoAvatar: localCeoAvatar("mistral", "jpg"),
   },
   {
     id: "deepseek",
@@ -129,6 +158,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "deepseek.com",
     color: "#4D6BFE",
     pattern: /deepseekbot/i,
+    ceoName: "Liang Wenfeng",
+    ceoAvatar: localCeoAvatar("deepseek", "png"),
   },
   {
     id: "cohere",
@@ -136,6 +167,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "cohere.com",
     color: "#39594D",
     pattern: /cohere-ai|cohere-training-data-crawler/i,
+    ceoName: "Aidan Gomez",
+    ceoAvatar: localCeoAvatar("cohere", "jpg"),
   },
   {
     id: "bytespider",
@@ -143,6 +176,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "bytedance.com",
     color: "#000000",
     pattern: /bytespider|bytedance/i,
+    ceoName: "Liang Rubo",
+    ceoAvatar: localCeoAvatar("bytespider", "jpg"),
   },
   {
     id: "commoncrawl",
@@ -150,6 +185,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "commoncrawl.org",
     color: "#2E7D32",
     pattern: /ccbot/i,
+    ceoName: "Mark Graham",
+    ceoAvatar: localCeoAvatar("commoncrawl", "png"),
   },
   {
     id: "diffbot",
@@ -157,6 +194,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "diffbot.com",
     color: "#0066CC",
     pattern: /diffbot/i,
+    ceoName: "Mike Tung",
+    ceoAvatar: localCeoAvatar("diffbot", "jpg"),
   },
   {
     id: "you",
@@ -164,6 +203,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "you.com",
     color: "#6366F1",
     pattern: /youbot/i,
+    ceoName: "Richard Socher",
+    ceoAvatar: localCeoAvatar("you", "jpg"),
   },
   {
     id: "firecrawl",
@@ -171,6 +212,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "firecrawl.dev",
     color: "#FF4F00",
     pattern: /firecrawlagent|firecrawl/i,
+    ceoName: "Eric Ciarla",
+    ceoAvatar: localCeoAvatar("firecrawl", "jpg"),
   },
   {
     id: "meta",
@@ -178,6 +221,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "meta.com",
     color: "#0866FF",
     pattern: /facebookexternalhit|facebookbot|meta-externalagent|meta-externalfetcher|facebot/i,
+    ceoName: "Mark Zuckerberg",
+    ceoAvatar: localCeoAvatar("meta", "png"),
   },
   {
     id: "yandex",
@@ -185,6 +230,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "yandex.com",
     color: "#FC3F1D",
     pattern: /yandexbot|yandeximages/i,
+    ceoName: "Arkady Volozh",
+    ceoAvatar: localCeoAvatar("yandex", "jpg"),
   },
   {
     id: "duckduckgo",
@@ -192,6 +239,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "duckduckgo.com",
     color: "#DE5833",
     pattern: /duckduckbot|duckassistbot/i,
+    ceoName: "Gabriel Weinberg",
+    ceoAvatar: localCeoAvatar("duckduckgo", "jpg"),
   },
   {
     id: "linkedin",
@@ -199,6 +248,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "linkedin.com",
     color: "#0A66C2",
     pattern: /linkedinbot/i,
+    ceoName: "Ryan Roslansky",
+    ceoAvatar: localCeoAvatar("linkedin", "jpg"),
   },
   {
     id: "twitter",
@@ -206,6 +257,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "x.com",
     color: "#000000",
     pattern: /twitterbot/i,
+    ceoName: "Elon Musk",
+    ceoAvatar: localCeoAvatar("twitter", "png"),
   },
   {
     id: "pinterest",
@@ -213,6 +266,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "pinterest.com",
     color: "#E60023",
     pattern: /pinterestbot/i,
+    ceoName: "Bill Ready",
+    ceoAvatar: localCeoAvatar("pinterest", "png"),
   },
   {
     id: "baidu",
@@ -220,6 +275,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "baidu.com",
     color: "#2319DC",
     pattern: /baiduspider/i,
+    ceoName: "Robin Li",
+    ceoAvatar: localCeoAvatar("baidu", "jpg"),
   },
   {
     id: "amazon",
@@ -227,6 +284,8 @@ export const BOT_DEFINITIONS: BotDefinition[] = [
     iconDomain: "amazon.com",
     color: "#FF9900",
     pattern: /amazonbot|bedrockbot/i,
+    ceoName: "Andy Jassy",
+    ceoAvatar: localCeoAvatar("amazon", "jpg"),
   },
 ];
 
@@ -236,6 +295,8 @@ export const BOT_OTHER: BotDefinition = {
   iconDomain: "",
   color: "#a1a1aa",
   pattern: /.*/,
+  ceoName: "Unknown Crawler",
+  ceoAvatar: "/icons/bot.png",
 };
 
 export function classifyBot(userAgent: string | null | undefined): BotId {
@@ -270,6 +331,12 @@ export function botIconUrl(id: BotId): string {
   const def = getBotDefinition(id);
   if (!def.iconDomain) return "/icons/globe.png";
   return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(def.iconDomain)}.ico`;
+}
+
+/** CEO / founder identity for realtime bot feed rows. */
+export function botCeoIdentity(id: BotId): { name: string; avatar: string } {
+  const def = getBotDefinition(id);
+  return { name: def.ceoName, avatar: def.ceoAvatar };
 }
 
 /** Loose client-side bot UA gate — server classifies and verifies bots. */

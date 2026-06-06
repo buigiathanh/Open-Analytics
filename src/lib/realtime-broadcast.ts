@@ -1,9 +1,9 @@
-import type { AnalyticsEvent } from "@/lib/types";
+import type { AnalyticsEvent, BotVisit } from "@/lib/types";
 
 export interface RealtimeHub {
   subscribe(siteId: string, ws: WebSocketLike): void;
   unsubscribe(siteId: string, ws: WebSocketLike): void;
-  broadcast(siteId: string, event: AnalyticsEvent): void;
+  broadcast(siteId: string, type: string, data: unknown): void;
 }
 
 export interface WebSocketLike {
@@ -25,5 +25,10 @@ export function broadcastAnalyticsEvent(
   siteId: string,
   event: AnalyticsEvent
 ): void {
-  getRealtimeHub()?.broadcast(siteId, event);
+  getRealtimeHub()?.broadcast(siteId, "event", event);
+}
+
+/** Push a new bot visit to all clients watching this project's realtime room. */
+export function broadcastBotVisit(siteId: string, visit: BotVisit): void {
+  getRealtimeHub()?.broadcast(siteId, "bot_visit", visit);
 }

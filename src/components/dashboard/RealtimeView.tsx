@@ -6,9 +6,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useRealtimeSocket } from "@/hooks/useRealtimeSocket";
 import { REALTIME_WINDOW_MS } from "@/lib/constants";
-import { getLiveFeed } from "@/lib/analytics";
+import { getLiveFeed, mergeLiveFeed } from "@/lib/analytics";
 import { liveFeedToGlobeVisitors } from "@/lib/live-to-globe";
 import { prependAnalyticsEvent } from "@/lib/realtime-events-merge";
+import { prependBotVisit } from "@/lib/realtime-bot-visits-merge";
 import {
   buildRealtimeShareUrl,
   parseRealtimeMapMode,
@@ -19,7 +20,7 @@ import {
 } from "@/lib/realtime-url";
 import { RealtimeFeedSidebar } from "./RealtimeFeedSidebar";
 import { RealtimeOverlay } from "./RealtimeOverlay";
-import type { AnalyticsEvent, Site } from "@/lib/types";
+import type { AnalyticsEvent, BotVisit, Site } from "@/lib/types";
 
 const VisitorGlobe = dynamic(
   () =>
@@ -48,6 +49,7 @@ const RealtimeVisitorMap = dynamic(
 interface RealtimeViewProps {
   site: Site;
   initialEvents: AnalyticsEvent[];
+  initialBotVisits?: BotVisit[];
   /** Owner dashboard (signed in) vs public /share link. */
   mode?: "owner" | "public";
   shareRealtimeEnabled?: boolean;
@@ -56,6 +58,7 @@ interface RealtimeViewProps {
 function RealtimeViewInner({
   site,
   initialEvents,
+  initialBotVisits = [],
   mode = "owner",
   shareRealtimeEnabled = false,
 }: RealtimeViewProps) {
@@ -65,6 +68,7 @@ function RealtimeViewInner({
   const { setTheme, resolvedTheme } = useTheme();
 
   const [events, setEvents] = useState(initialEvents);
+  const [botVisits, setBotVisits] = useState(initialBotVisits);
   const [selectedVisitorId, setSelectedVisitorId] = useState<string | null>(
     null
   );
@@ -144,11 +148,18 @@ function RealtimeViewInner({
     setEvents((prev) => prependAnalyticsEvent(prev, event));
   }, []);
 
-  useRealtimeSocket(site.id, onRealtimeEvent);
+  const onRealtimeBotVisit = useCallback((visit: BotVisit) => {
+    setBotVisits((prev) => prependBotVisit(prev, visit));
+  }, []);
+
+  useRealtimeSocket(site.id, {
+    onEvent: onRealtimeEvent,
+    onBotVisit: onRealtimeBotVisit,
+  });
 
   const feed = useMemo(
-    () => getLiveFeed(events, REALTIME_WINDOW_MS),
-    [events]
+    () => mergeLiveFeed(events, botVisits, REALTIME_WINDOW_MS),
+    [events, botVisits]
   );
 
   const globeVisitors = useMemo(

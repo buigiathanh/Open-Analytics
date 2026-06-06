@@ -32,10 +32,10 @@ function createRealtimeHub() {
       set.delete(ws);
       if (set.size === 0) rooms.delete(siteId);
     },
-    broadcast(siteId, event) {
+    broadcast(siteId, type, data) {
       const set = rooms.get(siteId);
       if (!set) return;
-      const msg = JSON.stringify({ type: "event", data: event });
+      const msg = JSON.stringify({ type, data });
       for (const ws of set) {
         if (ws.readyState === WS_OPEN) {
           try {
