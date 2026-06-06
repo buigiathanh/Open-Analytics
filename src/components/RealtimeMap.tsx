@@ -10,6 +10,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useRealtimeSocket } from "@/hooks/useRealtimeSocket";
+import { prependAnalyticsEvent } from "@/lib/realtime-events-merge";
 import { ONLINE_WINDOW_MS } from "@/lib/constants";
 import { getLiveVisitors } from "@/lib/stats";
 import { DEVICE_LABEL } from "@/lib/constants";
@@ -17,7 +18,7 @@ import { countryName } from "@/lib/countries";
 import type { AnalyticsEvent, LiveVisitor } from "@/lib/types";
 
 interface RealtimeMapProps {
-  siteKey: string;
+  siteId: string;
   initialEvents: AnalyticsEvent[];
   variant?: "card" | "full";
   /** Khi set, dùng events từ parent (tránh subscribe trùng) */
@@ -91,7 +92,7 @@ function PulsingMarker({
 }
 
 export function RealtimeMap({
-  siteKey,
+  siteId,
   initialEvents,
   variant = "card",
   externalEvents,
@@ -102,9 +103,9 @@ export function RealtimeMap({
   const managedRef = useRef(managedExternally);
   managedRef.current = managedExternally;
 
-  useRealtimeSocket(siteKey, (event) => {
+  useRealtimeSocket(siteId, (event) => {
     if (managedRef.current) return;
-    setInternalEvents((prev) => [event, ...prev].slice(0, 500));
+    setInternalEvents((prev) => prependAnalyticsEvent(prev, event, 500));
   });
 
   const live = useMemo(

@@ -8,6 +8,7 @@ import { useRealtimeSocket } from "@/hooks/useRealtimeSocket";
 import { REALTIME_WINDOW_MS } from "@/lib/constants";
 import { getLiveFeed } from "@/lib/analytics";
 import { liveFeedToGlobeVisitors } from "@/lib/live-to-globe";
+import { prependAnalyticsEvent } from "@/lib/realtime-events-merge";
 import {
   buildRealtimeShareUrl,
   parseRealtimeMapMode,
@@ -140,32 +141,10 @@ function RealtimeViewInner({
   }, [site.id, themeMode, mapViewMode]);
 
   const onRealtimeEvent = useCallback((event: AnalyticsEvent) => {
-    setEvents((prev) => [event, ...prev].slice(0, 800));
+    setEvents((prev) => prependAnalyticsEvent(prev, event));
   }, []);
 
-  useRealtimeSocket(site.site_key, onRealtimeEvent);
-
-  useEffect(() => {
-    const eventsUrl =
-      mode === "public"
-        ? `/api/share/${site.id}/events`
-        : `/api/sites/${site.id}/events?since=${encodeURIComponent(
-            new Date(Date.now() - REALTIME_WINDOW_MS).toISOString()
-          )}&limit=400`;
-
-    const poll = setInterval(async () => {
-      try {
-        const res = await fetch(eventsUrl, { credentials: "include" });
-        if (!res.ok) return;
-        const data = (await res.json()) as { events?: AnalyticsEvent[] };
-        if (data.events) setEvents(data.events);
-      } catch {
-        /* ignore */
-      }
-    }, 12000);
-
-    return () => clearInterval(poll);
-  }, [site.id, site.site_key, mode]);
+  useRealtimeSocket(site.id, onRealtimeEvent);
 
   const feed = useMemo(
     () => getLiveFeed(events, REALTIME_WINDOW_MS),

@@ -6,7 +6,7 @@ import {
   createVerificationChallenge,
   probeSiteForVerification,
   waitForVerification,
-} from "@/lib/bot-verify";
+} from "@/lib/bot-verify-server";
 
 interface RouteContext {
   params: Promise<{ siteId: string }>;
@@ -35,7 +35,7 @@ export async function POST(_request: Request, context: RouteContext) {
   if (!auth.ok) return auth.response;
 
   const { site } = auth;
-  const token = createVerificationChallenge(site.site_key);
+  const token = await createVerificationChallenge(site.site_key);
   const probe = await probeSiteForVerification(site.domain, token);
   if (!probe.ok) {
     return NextResponse.json({

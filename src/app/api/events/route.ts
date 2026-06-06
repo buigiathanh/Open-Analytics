@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 
   try {
     const event = await insertEvent(validated.payload);
-    broadcastAnalyticsEvent(event.site_key, event);
+    broadcastAnalyticsEvent(siteCheck.siteId, event);
     return jsonWithCors(request, { ok: true });
   } catch (err) {
     console.error("[events] insert failed", err);

@@ -92,17 +92,19 @@ export function RealtimeFeedSidebar({
                     />
                   </div>
 
-                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                    <span className="shrink-0 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                      {v.displayName}
-                    </span>
-                    <span className="inline-flex shrink-0 items-center gap-1">
-                      <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
-                      <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                        Live
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className="shrink-0 text-[11px] font-semibold text-zinc-900 dark:text-zinc-100">
+                        {v.displayName}
                       </span>
-                    </span>
-                    <DeviceIcon device={v.device} />
+                      <span className="inline-flex shrink-0 items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden />
+                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                          Live
+                        </span>
+                      </span>
+                      <DeviceIcon device={v.device} />
+                    </div>
                     <span className="min-w-0 truncate text-xs text-zinc-400 dark:text-zinc-500">
                       {v.path || "/"}
                     </span>

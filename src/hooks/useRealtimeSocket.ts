@@ -3,18 +3,18 @@
 import { useEffect, useRef } from "react";
 import type { AnalyticsEvent } from "@/lib/types";
 
-function wsUrl(siteKey: string): string {
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    (typeof window !== "undefined" ? window.location.origin : "");
-  const base = appUrl || (typeof window !== "undefined" ? window.location.origin : "");
+function wsUrl(siteId: string): string {
+  const base =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "";
   const parsed = new URL(base);
   const protocol = parsed.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${parsed.host}/api/realtime/ws?site_key=${encodeURIComponent(siteKey)}`;
+  return `${protocol}//${parsed.host}/api/realtime/ws?site_id=${encodeURIComponent(siteId)}`;
 }
 
 export function useRealtimeSocket(
-  siteKey: string,
+  siteId: string,
   onEvent: (event: AnalyticsEvent) => void
 ): void {
   const onEventRef = useRef(onEvent);
@@ -28,7 +28,7 @@ export function useRealtimeSocket(
     function connect() {
       if (closed) return;
       try {
-        ws = new WebSocket(wsUrl(siteKey));
+        ws = new WebSocket(wsUrl(siteId));
       } catch {
         scheduleReconnect();
         return;
@@ -74,5 +74,5 @@ export function useRealtimeSocket(
       closed = true;
       ws?.close();
     };
-  }, [siteKey]);
+  }, [siteId]);
 }

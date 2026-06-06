@@ -1,9 +1,9 @@
 import type { AnalyticsEvent } from "@/lib/types";
 
 export interface RealtimeHub {
-  subscribe(siteKey: string, ws: WebSocketLike): void;
-  unsubscribe(siteKey: string, ws: WebSocketLike): void;
-  broadcast(siteKey: string, event: AnalyticsEvent): void;
+  subscribe(siteId: string, ws: WebSocketLike): void;
+  unsubscribe(siteId: string, ws: WebSocketLike): void;
+  broadcast(siteId: string, event: AnalyticsEvent): void;
 }
 
 export interface WebSocketLike {
@@ -20,9 +20,10 @@ export function getRealtimeHub(): RealtimeHub | undefined {
   return global.__oaRealtimeHub;
 }
 
+/** Push a new event to all clients watching this project's realtime room. */
 export function broadcastAnalyticsEvent(
-  siteKey: string,
+  siteId: string,
   event: AnalyticsEvent
 ): void {
-  getRealtimeHub()?.broadcast(siteKey, event);
+  getRealtimeHub()?.broadcast(siteId, event);
 }

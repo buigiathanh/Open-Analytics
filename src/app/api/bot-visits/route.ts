@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { validateBotVisit } from "@/lib/bot-ingest";
+import { ingestBotVisit } from "@/lib/bot-ingest";
 import { SITE_API_KEY_HEADER } from "@/lib/constants";
 import { isPostgresConfigured } from "@/lib/db/config";
-import { insertBotVisit } from "@/lib/db/bot-visits";
 import {
   checkRateLimit,
   clientIp,
@@ -70,26 +69,17 @@ export async function POST(request: Request) {
   }
 
   const botIp = validated.payload.ip || requestIp;
-  const botCheck = await validateBotVisit(validated.payload, botIp);
-  if (!botCheck.accepted) {
-    return jsonWithCors(
-      request,
-      { error: botCheck.message ?? "Bot visit rejected" },
-      422
-    );
-  }
 
   try {
-    await insertBotVisit({
-      ...validated.payload,
-      ip: botIp,
-      bot_id: botCheck.botId,
-    });
+    const result = await ingestBotVisit(validated.payload, botIp);
+    if (!result.ok) {
+      return jsonWithCors(request, { error: result.message }, result.status);
+    }
     return jsonWithCors(request, {
       ok: true,
-      bot_id: botCheck.botId,
-      ip_verified: botCheck.ipVerified ?? false,
-      verification: botCheck.isVerification ?? false,
+      bot_id: result.botId,
+      ip_verified: result.ipVerified,
+      verification: result.isVerification,
     });
   } catch (err) {
     console.error("[bot-visits] insert failed", err);

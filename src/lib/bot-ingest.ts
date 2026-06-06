@@ -9,11 +9,12 @@ import {
   type BotId,
 } from "@/lib/bots";
 import type { BotVisitInsertPayload } from "@/lib/db/bot-visits";
+import { insertBotVisit } from "@/lib/db/bot-visits";
 import {
-  completeVerification,
   extractVerifyToken,
   isVerifyUserAgent,
 } from "@/lib/bot-verify";
+import { completeVerification } from "@/lib/bot-verify-server";
 
 export interface BotIngestResult {
   accepted: boolean;
@@ -30,19 +31,9 @@ export async function validateBotVisit(
   const ua = payload.user_agent.trim();
 
   if (isVerifyUserAgent(ua)) {
-    const token = extractVerifyToken(ua);
-    if (!token) {
-      return { accepted: false, message: "Invalid verification token" };
-    }
-    const ok = completeVerification(payload.site_key, token);
-    if (!ok) {
-      return { accepted: false, message: "Verification token expired or invalid" };
-    }
     return {
-      accepted: true,
-      botId: "other",
-      ipVerified: false,
-      isVerification: true,
+      accepted: false,
+      message: "Use ingestBotVisit for verification probes",
     };
   }
 
@@ -68,4 +59,76 @@ export async function validateBotVisit(
   }
 
   return { accepted: false, message: "Unsupported bot" };
+}
+
+export type BotVisitIngestOutcome =
+  | {
+      ok: true;
+      botId: BotId;
+      ipVerified: boolean;
+      isVerification: boolean;
+    }
+  | { ok: false; message: string; status: number };
+
+/** Validate bot visit (UA, IP, verify token) and persist to bot_visits. */
+export async function ingestBotVisit(
+  payload: BotVisitInsertPayload,
+  ip: string
+): Promise<BotVisitIngestOutcome> {
+  const ua = payload.user_agent.trim();
+
+  if (isVerifyUserAgent(ua)) {
+    await insertBotVisit({
+      ...payload,
+      ip,
+      bot_id: "other",
+    });
+
+    const token = extractVerifyToken(ua);
+    if (!token) {
+      return {
+        ok: false,
+        message: "Invalid verification token",
+        status: 422,
+      };
+    }
+
+    const verified = await completeVerification(payload.site_key, token);
+    if (!verified) {
+      return {
+        ok: false,
+        message: "Verification token expired or invalid",
+        status: 422,
+      };
+    }
+
+    return {
+      ok: true,
+      botId: "other",
+      ipVerified: false,
+      isVerification: true,
+    };
+  }
+
+  const botCheck = await validateBotVisit(payload, ip);
+  if (!botCheck.accepted || !botCheck.botId) {
+    return {
+      ok: false,
+      message: botCheck.message ?? "Bot visit rejected",
+      status: 422,
+    };
+  }
+
+  await insertBotVisit({
+    ...payload,
+    ip,
+    bot_id: botCheck.botId,
+  });
+
+  return {
+    ok: true,
+    botId: botCheck.botId,
+    ipVerified: botCheck.ipVerified ?? false,
+    isVerification: false,
+  };
 }

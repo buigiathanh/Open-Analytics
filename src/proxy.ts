@@ -4,7 +4,7 @@ import { updateSession } from "./lib/supabase/session";
 const BOT_UA = /bot|crawl|spider|slurp|preview|fetcher|archiver|httpclient|headless/i;
 const SITE_KEY = process.env.OPEN_ANALYTICS_SITE_KEY;
 const API_KEY = process.env.OPEN_ANALYTICS_API_KEY;
-const BOT_ENDPOINT = "http://localhost:3001/api/bot-visits";
+const BOT_ENDPOINT = process.env.NEXT_PUBLIC_APP_URL + "/api/bot-visits";
 
 function clientIp(request: NextRequest): string | null {
   const h = request.headers;

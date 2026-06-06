@@ -204,7 +204,9 @@ export async function verifySiteForBotVisit(
 /** Reject unknown site_key and hostname/domain mismatch (anti-spam). */
 export async function verifySiteForEvent(
   payload: EventInsertPayload
-): Promise<{ ok: true } | { ok: false; message: string }> {
+): Promise<
+  { ok: true; siteId: string } | { ok: false; message: string }
+> {
   const project = await getProjectBySiteKey(payload.site_key);
   if (!project) {
     return { ok: false, message: "Unknown site key" };
@@ -216,7 +218,7 @@ export async function verifySiteForEvent(
     }
   }
 
-  return { ok: true };
+  return { ok: true, siteId: project.id };
 }
 
 export { clientIp } from "@/lib/client-ip";

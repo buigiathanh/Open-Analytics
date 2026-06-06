@@ -93,6 +93,17 @@ alter table public.bot_visits drop column if exists referrer;
 
 alter table public.bot_visits add column if not exists ip text;
 
+-- Bot tracking verification challenges (shared across server workers)
+create table if not exists public.bot_verify_challenges (
+  site_key text primary key,
+  token text not null,
+  expires_at timestamptz not null,
+  completed_at timestamptz
+);
+
+create index if not exists bot_verify_challenges_expires_at_idx
+  on public.bot_verify_challenges (expires_at);
+
 -- Migration: move bot rows out of events into bot_visits (if upgrading)
 do $$
 begin

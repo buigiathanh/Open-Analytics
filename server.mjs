@@ -1,6 +1,6 @@
 /**
  * Custom Next.js server with WebSocket support for realtime analytics.
- * WebSocket: /api/realtime/ws?site_key=YOUR_SITE_KEY
+ * WebSocket: /api/realtime/ws?site_id=YOUR_PROJECT_ID
  * See docs/realtime-socket.md
  */
 import { createServer } from "node:http";
@@ -14,26 +14,26 @@ const port = parseInt(process.env.PORT || "3001", 10);
 const WS_OPEN = 1;
 
 function createRealtimeHub() {
-  /** @type {Map<string, Set<import('ws').WebSocket>>} */
-  const channels = new Map();
+  /** @type {Map<string, Set<import('ws').WebSocket>>} room = project site_id */
+  const rooms = new Map();
 
   return {
-    subscribe(siteKey, ws) {
-      let set = channels.get(siteKey);
+    subscribe(siteId, ws) {
+      let set = rooms.get(siteId);
       if (!set) {
         set = new Set();
-        channels.set(siteKey, set);
+        rooms.set(siteId, set);
       }
       set.add(ws);
     },
-    unsubscribe(siteKey, ws) {
-      const set = channels.get(siteKey);
+    unsubscribe(siteId, ws) {
+      const set = rooms.get(siteId);
       if (!set) return;
       set.delete(ws);
-      if (set.size === 0) channels.delete(siteKey);
+      if (set.size === 0) rooms.delete(siteId);
     },
-    broadcast(siteKey, event) {
-      const set = channels.get(siteKey);
+    broadcast(siteId, event) {
+      const set = rooms.get(siteId);
       if (!set) return;
       const msg = JSON.stringify({ type: "event", data: event });
       for (const ws of set) {
@@ -68,17 +68,17 @@ app.prepare().then(() => {
 
   wss.on("connection", (ws, req) => {
     const url = parse(req.url || "", true);
-    const siteKey = String(url.query?.site_key || "").trim();
-    if (!siteKey) {
-      ws.close(4400, "Missing site_key");
+    const siteId = String(url.query?.site_id || "").trim();
+    if (!siteId) {
+      ws.close(4400, "Missing site_id");
       return;
     }
 
-    hub.subscribe(siteKey, ws);
-    ws.send(JSON.stringify({ type: "connected", site_key: siteKey }));
+    hub.subscribe(siteId, ws);
+    ws.send(JSON.stringify({ type: "connected", site_id: siteId }));
 
-    ws.on("close", () => hub.unsubscribe(siteKey, ws));
-    ws.on("error", () => hub.unsubscribe(siteKey, ws));
+    ws.on("close", () => hub.unsubscribe(siteId, ws));
+    ws.on("error", () => hub.unsubscribe(siteId, ws));
   });
 
   server.on("upgrade", (req, socket, head) => {
@@ -96,7 +96,7 @@ app.prepare().then(() => {
   server.listen(port, () => {
     console.log(`> Ready on http://${hostname}:${port}`);
     console.log(
-      `> WebSocket: ws://${hostname}:${port}/api/realtime/ws?site_key=…`
+      `> WebSocket: ws://${hostname}:${port}/api/realtime/ws?site_id=…`
     );
   });
 });
