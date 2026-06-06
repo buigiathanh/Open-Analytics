@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { createAppAdminClient } from "@/lib/supabase/admin";
-import {
-  isAppServiceRoleConfigured,
-  isSupabaseConfigured,
-} from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isPostgresConfigured } from "@/lib/db/config";
+import { updateProjectShare } from "@/lib/db/projects";
 import { getSiteForUser } from "@/lib/registry-sites";
 
 interface RouteContext {
@@ -15,11 +13,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ error: "Dashboard is not configured." }, { status: 503 });
   }
-  if (!isAppServiceRoleConfigured()) {
-    return NextResponse.json(
-      { error: "Missing SUPABASE_SERVICE_ROLE_KEY." },
-      { status: 503 }
-    );
+  if (!isPostgresConfigured()) {
+    return NextResponse.json({ error: "Missing POSTGRES_URL." }, { status: 503 });
   }
 
   const session = await createClient();
@@ -31,8 +26,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const { siteId } = await context.params;
-  const registry = await createClient();
-  const site = await getSiteForUser(registry, siteId, user.id);
+  const site = await getSiteForUser(siteId, user.id);
   if (!site) {
     return NextResponse.json({ error: "Site not found." }, { status: 404 });
   }
@@ -51,25 +45,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const admin = createAppAdminClient();
-  if (!admin) {
-    return NextResponse.json({ error: "Admin client unavailable." }, { status: 503 });
-  }
-
-  const { data, error } = await admin
-    .from("projects")
-    .update({ share_realtime_enabled: body.enabled })
-    .eq("id", siteId)
-    .eq("user_id", user.id)
-    .select("id, share_realtime_enabled")
-    .single();
-
-  if (error || !data) {
+  const data = await updateProjectShare(siteId, user.id, body.enabled);
+  if (!data) {
     return NextResponse.json(
-      {
-        error:
-          "Could not update share setting. Run supabase/migrations/add-share-realtime-enabled.sql on your app database.",
-      },
+      { error: "Could not update share setting." },
       { status: 500 }
     );
   }

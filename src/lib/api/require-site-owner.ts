@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import {
-  isAppServiceRoleConfigured,
-  isSupabaseConfigured,
-} from "@/lib/supabase/config";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isPostgresConfigured } from "@/lib/db/config";
 import { getSiteForUser } from "@/lib/registry-sites";
 import type { Site } from "@/lib/types";
 import type { User } from "@supabase/supabase-js";
@@ -23,11 +21,11 @@ export async function requireSiteOwner(
       ),
     };
   }
-  if (!isAppServiceRoleConfigured()) {
+  if (!isPostgresConfigured()) {
     return {
       ok: false,
       response: NextResponse.json(
-        { error: "Missing SUPABASE_SERVICE_ROLE_KEY." },
+        { error: "Missing POSTGRES_URL in .env." },
         { status: 503 }
       ),
     };
@@ -44,8 +42,7 @@ export async function requireSiteOwner(
     };
   }
 
-  const registry = await createClient();
-  const site = await getSiteForUser(registry, siteId, user.id);
+  const site = await getSiteForUser(siteId, user.id);
   if (!site) {
     return {
       ok: false,

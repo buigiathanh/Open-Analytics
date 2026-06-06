@@ -1,11 +1,11 @@
 /**
  * Open Analytics — client-side tracker
- * Sends page views and events to your Cloudflare Worker (data-endpoint).
+ * Sends page views and events to the app ingest API (data-endpoint).
  *
  * Config via script tag attributes or window.OpenAnalytics before loading this file.
  *
  * data-site-key          — required site key from dashboard
- * data-endpoint          — required Worker URL (JSON body → Supabase via Secret key)
+ * data-endpoint          — ingest API URL (default: {APP_URL}/api/events)
  * data-domains           — comma-separated hostnames allowed to track (optional)
  * data-do-not-track      — "true" to respect Do Not Track
  * data-auto-track        — "false" to disable automatic pageviews
@@ -48,7 +48,7 @@
   };
 
   var BOT_UA =
-    /bot|crawl|spider|slurp|mediapartners|facebookexternalhit|bingpreview|linkedinbot|whatsapp|telegram|preview|headlesschrome|phantomjs|semrush|ahrefs|petalbot|bytespider/i;
+    /bot|crawl|spider|slurp|preview|fetcher|archiver|httpclient|headless/i;
 
   function getConfig() {
     var script = document.currentScript;
@@ -628,16 +628,39 @@
       });
   }
 
+  function buildBotPayload(cfg) {
+    var ua = navigator.userAgent || "";
+    var loc = window.location;
+    var path = loc.pathname + loc.hash;
+    return {
+      site_key: cfg.siteKey,
+      path: path.slice(0, 500) || "/",
+      is_bot: true,
+      user_agent: ua.slice(0, 500) || null,
+    };
+  }
+
+  function trackBot(cfg) {
+    if (!cfg.siteKey || !cfg.endpoint) return;
+    if (!isDomainAllowed(cfg)) return;
+    sendToEndpoint(cfg.endpoint, buildBotPayload(cfg)).catch(function () {});
+  }
+
   function trackingDisabled(cfg) {
-    if (isBot()) return true;
+    if (isBot()) return false;
     if (cfg.doNotTrack && hasDoNotTrack()) return true;
     if (!isDomainAllowed(cfg)) return true;
     return false;
   }
 
+  function humanTrackingDisabled(cfg) {
+    if (isBot()) return true;
+    return trackingDisabled(cfg);
+  }
+
   function track(cfg, eventType, extra) {
     if (!cfg.siteKey || !cfg.endpoint) return;
-    if (trackingDisabled(cfg)) return;
+    if (humanTrackingDisabled(cfg)) return;
 
     var payload = buildPayload(cfg, eventType, extra);
     sendToEndpoint(cfg.endpoint, payload).catch(function () {});
@@ -725,7 +748,9 @@
     initGeo(cfg);
   }
 
-  if (!trackingDisabled(cfg)) {
+  if (isBot()) {
+    if (cfg.autoTrack) trackBot(cfg);
+  } else if (!trackingDisabled(cfg)) {
     startTracking();
   }
 

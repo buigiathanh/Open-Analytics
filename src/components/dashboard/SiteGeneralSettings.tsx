@@ -5,10 +5,6 @@ import { useState } from "react";
 import type { Site } from "@/lib/types";
 import { SiteSettingsSection } from "./SiteSettingsSection";
 
-function projectIdFromSite(site: Site): string {
-  return site.supabase_project_id ?? site.supabase_url ?? "";
-}
-
 export function SiteGeneralSettings({ site }: { site: Site }) {
   const router = useRouter();
   const [name, setName] = useState(site.name);
@@ -24,12 +20,6 @@ export function SiteGeneralSettings({ site }: { site: Site }) {
       return;
     }
 
-    const projectId = projectIdFromSite(site);
-    if (!projectId.trim()) {
-      setError("Configure Supabase in Settings → Supabase first.");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -37,11 +27,7 @@ export function SiteGeneralSettings({ site }: { site: Site }) {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          domain,
-          supabaseProjectId: projectId,
-        }),
+        body: JSON.stringify({ name, domain }),
       });
       const data = await res.json();
       if (!res.ok) {

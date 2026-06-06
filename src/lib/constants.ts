@@ -1,5 +1,5 @@
 /** Hosted tracker script URL (Add website setup & embed snippets). */
-export const TRACKER_SCRIPT_VERSION = "1.0.4";
+export const TRACKER_SCRIPT_VERSION = "1.0.7";
 
 const TRACKER_SCRIPT_BASE_URL = "https://analytics.gitopen.dev/tracker.js";
 
@@ -12,10 +12,25 @@ export function withTrackerVersion(url: string): string {
 
 export const DEFAULT_TRACKER_SCRIPT_URL = withTrackerVersion(TRACKER_SCRIPT_BASE_URL);
 
-/** Cloudflare Worker URL for event ingest (data-endpoint). Set in .env for embed snippets. */
+/** Event ingest API URL for tracker embed (data-endpoint). */
 export const DEFAULT_TRACKER_ENDPOINT =
   process.env.NEXT_PUBLIC_TRACKER_ENDPOINT?.replace(/\/$/, "") ||
-  "https://your-worker.workers.dev";
+  `${process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3001"}/api/events`;
+
+/** Bot visit ingest API URL (middleware / server-side tracking). */
+export const DEFAULT_BOT_TRACKER_ENDPOINT =
+  process.env.NEXT_PUBLIC_BOT_TRACKER_ENDPOINT?.replace(/\/$/, "") ||
+  `${process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3001"}/api/bot-visits`;
+
+/** Header sent with bot visit ingest requests (value = project api_key). */
+export const SITE_API_KEY_HEADER = "x-api-key";
+
+const BOT_MIDDLEWARE_HELPER_BASE =
+  process.env.NEXT_PUBLIC_BOT_MIDDLEWARE_HELPER_URL?.replace(/\/$/, "") ||
+  `${process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3001"}/bot-middleware.mjs`;
+
+/** Edge-importable helper for Next.js middleware snippets. */
+export const DEFAULT_BOT_MIDDLEWARE_HELPER_URL = BOT_MIDDLEWARE_HELPER_BASE;
 
 /** Live realtime demo on the marketing homepage (public share link). */
 export const DEMO_SHARE_REALTIME_URL =

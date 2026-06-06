@@ -1,4 +1,5 @@
-import { createAppAdminClient } from "@/lib/supabase/admin";
+import { query, queryOne } from "@/lib/db/pool";
+import { isPostgresConfigured } from "@/lib/db/config";
 
 export type GscConnectionRow = {
   id: string;
@@ -20,20 +21,32 @@ export type GscConnectionPublic = {
   needsProperty: boolean;
 };
 
+function rowToGsc(row: Record<string, unknown>): GscConnectionRow {
+  return {
+    id: String(row.id),
+    project_id: String(row.project_id),
+    user_id: String(row.user_id),
+    google_email: row.google_email != null ? String(row.google_email) : null,
+    access_token: String(row.access_token),
+    refresh_token: String(row.refresh_token),
+    access_token_expires_at: new Date(
+      String(row.access_token_expires_at)
+    ).toISOString(),
+    site_url: row.site_url != null ? String(row.site_url) : null,
+    created_at: new Date(String(row.created_at)).toISOString(),
+    updated_at: new Date(String(row.updated_at)).toISOString(),
+  };
+}
+
 export async function getGscConnection(
   projectId: string
 ): Promise<GscConnectionRow | null> {
-  const admin = createAppAdminClient();
-  if (!admin) return null;
-
-  const { data, error } = await admin
-    .from("google_search_console_connections")
-    .select("*")
-    .eq("project_id", projectId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as GscConnectionRow;
+  if (!isPostgresConfigured()) return null;
+  const row = await queryOne(
+    `select * from google_search_console_connections where project_id = $1`,
+    [projectId]
+  );
+  return row ? rowToGsc(row) : null;
 }
 
 export function toPublicConnection(
@@ -64,30 +77,34 @@ export async function upsertGscConnection(input: {
   expiresAt: Date;
   siteUrl?: string | null;
 }): Promise<GscConnectionRow | null> {
-  const admin = createAppAdminClient();
-  if (!admin) return null;
-
+  if (!isPostgresConfigured()) return null;
   const now = new Date().toISOString();
-  const { data, error } = await admin
-    .from("google_search_console_connections")
-    .upsert(
-      {
-        project_id: input.projectId,
-        user_id: input.userId,
-        google_email: input.googleEmail,
-        access_token: input.accessToken,
-        refresh_token: input.refreshToken,
-        access_token_expires_at: input.expiresAt.toISOString(),
-        site_url: input.siteUrl ?? null,
-        updated_at: now,
-      },
-      { onConflict: "project_id" }
-    )
-    .select("*")
-    .single();
-
-  if (error || !data) return null;
-  return data as GscConnectionRow;
+  const row = await queryOne(
+    `insert into google_search_console_connections (
+      project_id, user_id, google_email, access_token, refresh_token,
+      access_token_expires_at, site_url, updated_at
+    ) values ($1,$2,$3,$4,$5,$6,$7,$8)
+    on conflict (project_id) do update set
+      user_id = excluded.user_id,
+      google_email = excluded.google_email,
+      access_token = excluded.access_token,
+      refresh_token = excluded.refresh_token,
+      access_token_expires_at = excluded.access_token_expires_at,
+      site_url = coalesce(excluded.site_url, google_search_console_connections.site_url),
+      updated_at = excluded.updated_at
+    returning *`,
+    [
+      input.projectId,
+      input.userId,
+      input.googleEmail,
+      input.accessToken,
+      input.refreshToken,
+      input.expiresAt.toISOString(),
+      input.siteUrl ?? null,
+      now,
+    ]
+  );
+  return row ? rowToGsc(row) : null;
 }
 
 export async function updateGscTokens(
@@ -95,45 +112,35 @@ export async function updateGscTokens(
   accessToken: string,
   expiresAt: Date
 ): Promise<void> {
-  const admin = createAppAdminClient();
-  if (!admin) return;
-
-  await admin
-    .from("google_search_console_connections")
-    .update({
-      access_token: accessToken,
-      access_token_expires_at: expiresAt.toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("project_id", projectId);
+  if (!isPostgresConfigured()) return;
+  await query(
+    `update google_search_console_connections
+     set access_token = $2, access_token_expires_at = $3, updated_at = $4
+     where project_id = $1`,
+    [projectId, accessToken, expiresAt.toISOString(), new Date().toISOString()]
+  );
 }
 
 export async function updateGscProperty(
   projectId: string,
   siteUrl: string
 ): Promise<boolean> {
-  const admin = createAppAdminClient();
-  if (!admin) return false;
-
-  const { error } = await admin
-    .from("google_search_console_connections")
-    .update({
-      site_url: siteUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("project_id", projectId);
-
-  return !error;
+  if (!isPostgresConfigured()) return false;
+  const row = await queryOne(
+    `update google_search_console_connections
+     set site_url = $2, updated_at = $3
+     where project_id = $1
+     returning id`,
+    [projectId, siteUrl, new Date().toISOString()]
+  );
+  return Boolean(row);
 }
 
 export async function deleteGscConnection(projectId: string): Promise<boolean> {
-  const admin = createAppAdminClient();
-  if (!admin) return false;
-
-  const { error } = await admin
-    .from("google_search_console_connections")
-    .delete()
-    .eq("project_id", projectId);
-
-  return !error;
+  if (!isPostgresConfigured()) return false;
+  const row = await queryOne(
+    `delete from google_search_console_connections where project_id = $1 returning id`,
+    [projectId]
+  );
+  return Boolean(row);
 }

@@ -73,7 +73,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   not_configured: "Google OAuth is not configured on the server.",
   no_refresh_token: "Could not get a refresh token. Revoke app access in Google Account and retry.",
   token_exchange: "Could not complete Google sign-in. Try again.",
-  server: "Server error. Check SUPABASE_SERVICE_ROLE_KEY.",
+  server: "Server error. Check POSTGRES_URL.",
 };
 
 export function SearchConsoleView({ site }: { site: Site }) {

@@ -1,16 +1,16 @@
 import { notFound } from "next/navigation";
 import { SetupBanner } from "@/components/SetupBanner";
 import { getRegistryUser, getSiteForUser } from "@/lib/registry-sites";
-import { getSupabase } from "@/lib/supabase";
-import { getSupabaseForSite } from "@/lib/supabase-project";
+import { isPostgresConfigured } from "@/lib/db/config";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { buildDashboardAnalytics } from "@/lib/analytics";
 import { ONLINE_WINDOW_MS } from "@/lib/constants";
+import { fetchEventsForSite } from "@/lib/db/events";
 import {
   getGscDailySeries,
   isGscReadyForProject,
   mergeGscIntoTimeSeries,
 } from "@/lib/google/search-console-overview";
-import type { AnalyticsEvent } from "@/lib/types";
 import { SiteDashboard } from "./SiteDashboard";
 
 export const dynamic = "force-dynamic";
@@ -25,34 +25,25 @@ export default async function SitePage({ params, searchParams }: PageProps) {
   const { days: daysParam } = await searchParams;
   const periodDays = daysParam === "30" ? 30 : 7;
 
-  const registry = await getSupabase();
-  if (!registry) {
+  if (!isSupabaseConfigured() || !isPostgresConfigured()) {
     return <SetupBanner />;
   }
 
-  const user = await getRegistryUser(registry);
+  const user = await getRegistryUser();
   if (!user) notFound();
 
-  const siteRow = await getSiteForUser(registry, siteId, user.id);
+  const siteRow = await getSiteForUser(siteId, user.id);
   if (!siteRow) notFound();
-  const eventsDb = getSupabaseForSite(siteRow);
-  if (!eventsDb) {
-    return <SetupBanner />;
-  }
 
   const fetchDays = Math.max(periodDays * 2, 60);
   const rangeStart = new Date();
   rangeStart.setDate(rangeStart.getDate() - fetchDays);
 
-  const { data: events } = await eventsDb
-    .from("events")
-    .select("*")
-    .eq("site_key", siteRow.site_key)
-    .gte("created_at", rangeStart.toISOString())
-    .order("created_at", { ascending: false })
-    .limit(5000);
+  const eventList = await fetchEventsForSite(siteRow.site_key, {
+    since: rangeStart.toISOString(),
+    limit: 5000,
+  });
 
-  const eventList = (events as AnalyticsEvent[]) ?? [];
   const analytics = buildDashboardAnalytics(
     eventList,
     ONLINE_WINDOW_MS,

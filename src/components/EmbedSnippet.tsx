@@ -11,7 +11,7 @@ interface EmbedSnippetProps {
 export function EmbedSnippet({ site }: EmbedSnippetProps) {
   const [copied, setCopied] = useState(false);
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3001";
   const endpoint = DEFAULT_TRACKER_ENDPOINT;
 
   const snippet = `<!-- Open Analytics -->
@@ -48,10 +48,7 @@ export function EmbedSnippet({ site }: EmbedSnippetProps) {
         Site key:{" "}
         <code className="text-zinc-700 dark:text-zinc-300">{site.site_key}</code>
         {" · "}
-        Worker URL from <code>NEXT_PUBLIC_TRACKER_ENDPOINT</code> — see{" "}
-        <a href="/docs/worker" className="text-emerald-600 hover:underline">
-          Cloudflare Worker setup
-        </a>
+        Events are sent to <code>{endpoint}</code>
       </p>
     </div>
   );

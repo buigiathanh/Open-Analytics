@@ -1,12 +1,13 @@
+import type { BotId } from "./bots";
+
 export interface Site {
   id: string;
   name: string;
   domain: string;
   site_key: string;
+  /** Secret ingest key — only loaded for site owners / server-side auth. */
+  api_key?: string;
   user_id: string | null;
-  supabase_project_id: string | null;
-  supabase_url: string | null;
-  supabase_anon_key: string | null;
   share_realtime_enabled: boolean;
   created_at: string;
 }
@@ -43,6 +44,16 @@ export interface AnalyticsEvent {
   fbclid: string | null;
   msclkid: string | null;
   event_name: string | null;
+  created_at: string;
+}
+
+export interface BotVisit {
+  id: number;
+  site_key: string;
+  bot_id: BotId;
+  user_agent: string;
+  path: string | null;
+  ip: string | null;
   created_at: string;
 }
 

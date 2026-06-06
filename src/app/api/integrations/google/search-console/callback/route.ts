@@ -8,7 +8,8 @@ import {
 } from "@/lib/google/oauth";
 import { listGscSites, matchGscProperty } from "@/lib/google/search-console";
 import { upsertGscConnection } from "@/lib/google/search-console-db";
-import { createAppAdminClient } from "@/lib/supabase/admin";
+import { getProjectForUser } from "@/lib/db/projects";
+import { isPostgresConfigured } from "@/lib/db/config";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -50,17 +51,11 @@ export async function GET(request: Request) {
     return redirect("/app?error=gsc_invalid_state");
   }
 
-  const admin = createAppAdminClient();
-  if (!admin) {
+  if (!isPostgresConfigured()) {
     return redirect(`/app/${state.siteId}/search-console?error=server`);
   }
 
-  const { data: project } = await admin
-    .from("projects")
-    .select("id, domain, user_id")
-    .eq("id", state.siteId)
-    .eq("user_id", state.userId)
-    .maybeSingle();
+  const project = await getProjectForUser(state.siteId, state.userId);
 
   if (!project) {
     return redirect("/app?error=gsc_site_not_found");

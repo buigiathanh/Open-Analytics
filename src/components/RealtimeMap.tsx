@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -9,7 +9,7 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { createClient as createBrowserClient } from "@/lib/supabase/browser";
+import { useRealtimeSocket } from "@/hooks/useRealtimeSocket";
 import { ONLINE_WINDOW_MS } from "@/lib/constants";
 import { getLiveVisitors } from "@/lib/stats";
 import { DEVICE_LABEL } from "@/lib/constants";
@@ -99,47 +99,13 @@ export function RealtimeMap({
   const [internalEvents, setInternalEvents] = useState(initialEvents);
   const events = externalEvents ?? internalEvents;
   const managedExternally = externalEvents != null;
+  const managedRef = useRef(managedExternally);
+  managedRef.current = managedExternally;
 
-  useEffect(() => {
-    if (managedExternally) return;
-    const supabase = createBrowserClient();
-    if (!supabase) return;
-
-    const channel = supabase
-      .channel(`events:${siteKey}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "events",
-          filter: `site_key=eq.${siteKey}`,
-        },
-        (payload) => {
-          setInternalEvents((prev) =>
-            [payload.new as AnalyticsEvent, ...prev].slice(0, 500)
-          );
-        }
-      )
-      .subscribe();
-
-    const interval = setInterval(async () => {
-      const since = new Date(Date.now() - ONLINE_WINDOW_MS * 3).toISOString();
-      const { data } = await supabase
-        .from("events")
-        .select("*")
-        .eq("site_key", siteKey)
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (data) setInternalEvents(data as AnalyticsEvent[]);
-    }, 15000);
-
-    return () => {
-      clearInterval(interval);
-      supabase.removeChannel(channel);
-    };
-  }, [siteKey, managedExternally]);
+  useRealtimeSocket(siteKey, (event) => {
+    if (managedRef.current) return;
+    setInternalEvents((prev) => [event, ...prev].slice(0, 500));
+  });
 
   const live = useMemo(
     () => getLiveVisitors(events, ONLINE_WINDOW_MS),

@@ -61,10 +61,12 @@ export function visitorDisplayName(visitorId: string): string {
   return `${adj} ${animal}`;
 }
 
-/** Cartoon-style avatar (Dicebear adventurer) — stable per visitor */
-export function visitorAvatarUrl(visitorId: string, size = 80): string {
-  const seed = encodeURIComponent(visitorId);
-  return `https://api.dicebear.com/9.x/micah/png?seed=${seed}&size=${size}`;
+/** Local avatar pool (public/avatars/) — stable per visitor */
+export const AVATAR_COUNT = 100;
+
+export function visitorAvatarUrl(visitorId: string, _size = 80): string {
+  const index = hashId(visitorId) % AVATAR_COUNT;
+  return `/avatars/${index}.png`;
 }
 
 export type VisitorStatusColor = "blue" | "red" | "emerald" | "white";

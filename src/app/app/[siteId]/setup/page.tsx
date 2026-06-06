@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { SetupBanner } from "@/components/SetupBanner";
 import { EmbedSnippet } from "@/components/EmbedSnippet";
 import { getRegistryUser, getSiteForUser } from "@/lib/registry-sites";
-import { getSupabase } from "@/lib/supabase";
-import type { Site } from "@/lib/types";
+import { isPostgresConfigured } from "@/lib/db/config";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -13,16 +13,15 @@ interface PageProps {
 
 export default async function SiteSetupPage({ params }: PageProps) {
   const { siteId } = await params;
-  const supabase = await getSupabase();
 
-  if (!supabase) {
+  if (!isSupabaseConfigured() || !isPostgresConfigured()) {
     return <SetupBanner />;
   }
 
-  const user = await getRegistryUser(supabase);
+  const user = await getRegistryUser();
   if (!user) notFound();
 
-  const site = await getSiteForUser(supabase, siteId, user.id);
+  const site = await getSiteForUser(siteId, user.id);
   if (!site) notFound();
 
   return (

@@ -1,11 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
-import { createClient as createBrowserClient } from "@/lib/supabase/browser";
-import { createProjectClient } from "@/lib/supabase-project";
+import { useRealtimeSocket } from "@/hooks/useRealtimeSocket";
 import {
   REALTIME_CHART_MINUTES,
   REALTIME_WINDOW_MS,
@@ -149,48 +148,33 @@ function RealtimeViewInner({
     return { shareUrl: url, embedCode: embed };
   }, [site.id, themeMode, mapViewMode]);
 
-  useEffect(() => {
-    const supabase =
-      site.supabase_url && site.supabase_anon_key
-        ? createProjectClient(site.supabase_url, site.supabase_anon_key)
-        : createBrowserClient();
-    if (!supabase) return;
+  const onRealtimeEvent = useCallback((event: AnalyticsEvent) => {
+    setEvents((prev) => [event, ...prev].slice(0, 800));
+  }, []);
 
-    const channel = supabase
-      .channel(`rt:${site.site_key}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "events",
-          filter: `site_key=eq.${site.site_key}`,
-        },
-        (payload) => {
-          setEvents((prev) =>
-            [payload.new as AnalyticsEvent, ...prev].slice(0, 800)
-          );
-        }
-      )
-      .subscribe();
+  useRealtimeSocket(site.site_key, onRealtimeEvent);
+
+  useEffect(() => {
+    const eventsUrl =
+      mode === "public"
+        ? `/api/share/${site.id}/events`
+        : `/api/sites/${site.id}/events?since=${encodeURIComponent(
+            new Date(Date.now() - REALTIME_WINDOW_MS).toISOString()
+          )}&limit=400`;
 
     const poll = setInterval(async () => {
-      const since = new Date(Date.now() - REALTIME_WINDOW_MS).toISOString();
-      const { data } = await supabase
-        .from("events")
-        .select("*")
-        .eq("site_key", site.site_key)
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(400);
-      if (data) setEvents(data as AnalyticsEvent[]);
+      try {
+        const res = await fetch(eventsUrl, { credentials: "include" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { events?: AnalyticsEvent[] };
+        if (data.events) setEvents(data.events);
+      } catch {
+        /* ignore */
+      }
     }, 12000);
 
-    return () => {
-      clearInterval(poll);
-      supabase.removeChannel(channel);
-    };
-  }, [site.site_key, site.supabase_url, site.supabase_anon_key]);
+    return () => clearInterval(poll);
+  }, [site.id, site.site_key, mode]);
 
   const feed = useMemo(
     () => getLiveFeed(events, REALTIME_WINDOW_MS),

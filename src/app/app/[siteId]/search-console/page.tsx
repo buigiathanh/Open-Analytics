@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { SetupBanner } from "@/components/SetupBanner";
 import { SearchConsoleView } from "@/components/dashboard/SearchConsoleView";
 import { getRegistryUser, getSiteForUser } from "@/lib/registry-sites";
-import { getSupabase } from "@/lib/supabase";
+import { isPostgresConfigured } from "@/lib/db/config";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -13,16 +14,15 @@ interface PageProps {
 
 export default async function SearchConsolePage({ params }: PageProps) {
   const { siteId } = await params;
-  const registry = await getSupabase();
 
-  if (!registry) {
+  if (!isSupabaseConfigured() || !isPostgresConfigured()) {
     return <SetupBanner />;
   }
 
-  const user = await getRegistryUser(registry);
+  const user = await getRegistryUser();
   if (!user) notFound();
 
-  const site = await getSiteForUser(registry, siteId, user.id);
+  const site = await getSiteForUser(siteId, user.id);
   if (!site) notFound();
 
   return (

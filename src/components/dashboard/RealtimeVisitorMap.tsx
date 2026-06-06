@@ -11,6 +11,7 @@ import {
   type VisitorStatusColor,
 } from "@/lib/visitor-identity";
 import type { GlobeVisitor } from "@/lib/visitor-globe-data";
+import { VietnamIslandsMapLayer } from "@/components/dashboard/VietnamIslandsMapOverlay";
 
 const FOCUS_ZOOM = 8;
 const FLY_DURATION = 1.25;
@@ -228,6 +229,7 @@ export function RealtimeVisitorMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CARTO'
           url={tileUrl}
         />
+        <VietnamIslandsMapLayer />
         {selectedVisitorId == null && <InitialBounds visitors={visitors} />}
         <MapFocus
           selectedVisitorId={selectedVisitorId}

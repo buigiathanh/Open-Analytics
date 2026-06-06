@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { RealtimeView } from "@/components/dashboard/RealtimeView";
 import { fetchRecentRealtimeEvents } from "@/lib/realtime-events";
 import { getSiteForPublicShare } from "@/lib/registry-sites";
-import { getSupabaseForSite } from "@/lib/supabase-project";
+import { isPostgresConfigured } from "@/lib/db/config";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +12,10 @@ interface PageProps {
 
 export default async function PublicRealtimeSharePage({ params }: PageProps) {
   const { siteId } = await params;
+  if (!isPostgresConfigured()) notFound();
+
   const site = await getSiteForPublicShare(siteId);
-  if (!site || !getSupabaseForSite(site)) notFound();
+  if (!site) notFound();
 
   const events = await fetchRecentRealtimeEvents(site);
 

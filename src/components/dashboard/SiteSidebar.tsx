@@ -75,6 +75,12 @@ export function SiteSidebar({ site }: { site: Site }) {
       match: (p) => p.startsWith(`${base}/realtime`),
     },
     {
+      id: "bots",
+      label: "Bots",
+      href: `${base}/bots`,
+      match: (p) => p.startsWith(`${base}/bots`),
+    },
+    {
       id: "search-console",
       label: "Search Console",
       href: `${base}/search-console`,
@@ -103,12 +109,6 @@ export function SiteSidebar({ site }: { site: Site }) {
       label: "General",
       href: `${base}/settings/general`,
       match: (p) => p.startsWith(`${base}/settings/general`),
-    },
-    {
-      id: "supabase",
-      label: "Supabase",
-      href: `${base}/settings/supabase`,
-      match: (p) => p.startsWith(`${base}/settings/supabase`),
     },
     {
       id: "sharing",

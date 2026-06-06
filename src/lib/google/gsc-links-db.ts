@@ -1,4 +1,5 @@
-import { createAppAdminClient } from "@/lib/supabase/admin";
+import { query, queryOne } from "@/lib/db/pool";
+import { isPostgresConfigured } from "@/lib/db/config";
 import type { UrlInspectionFull } from "@/lib/google/url-inspection";
 
 export type GscManagedLinkRow = {
@@ -10,20 +11,29 @@ export type GscManagedLinkRow = {
   created_at: string;
 };
 
+function rowToLink(row: Record<string, unknown>): GscManagedLinkRow {
+  return {
+    id: String(row.id),
+    project_id: String(row.project_id),
+    url: String(row.url),
+    inspection: (row.inspection as UrlInspectionFull | null) ?? null,
+    last_inspected_at:
+      row.last_inspected_at != null
+        ? new Date(String(row.last_inspected_at)).toISOString()
+        : null,
+    created_at: new Date(String(row.created_at)).toISOString(),
+  };
+}
+
 export async function listGscManagedLinks(
   projectId: string
 ): Promise<GscManagedLinkRow[]> {
-  const admin = createAppAdminClient();
-  if (!admin) return [];
-
-  const { data, error } = await admin
-    .from("gsc_managed_links")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
-
-  if (error || !data) return [];
-  return data as GscManagedLinkRow[];
+  if (!isPostgresConfigured()) return [];
+  const rows = await query(
+    `select * from gsc_managed_links where project_id = $1 order by created_at desc`,
+    [projectId]
+  );
+  return rows.map(rowToLink);
 }
 
 export async function upsertGscManagedLink(input: {
@@ -32,79 +42,63 @@ export async function upsertGscManagedLink(input: {
   inspection: UrlInspectionFull | null;
   inspectedAt: Date | null;
 }): Promise<GscManagedLinkRow | null> {
-  const admin = createAppAdminClient();
-  if (!admin) return null;
-
-  const { data, error } = await admin
-    .from("gsc_managed_links")
-    .upsert(
-      {
-        project_id: input.projectId,
-        url: input.url,
-        inspection: input.inspection,
-        last_inspected_at: input.inspectedAt?.toISOString() ?? null,
-      },
-      { onConflict: "project_id,url" }
-    )
-    .select("*")
-    .single();
-
-  if (error || !data) return null;
-  return data as GscManagedLinkRow;
+  if (!isPostgresConfigured()) return null;
+  const row = await queryOne(
+    `insert into gsc_managed_links (project_id, url, inspection, last_inspected_at)
+     values ($1, $2, $3, $4)
+     on conflict (project_id, url) do update set
+       inspection = excluded.inspection,
+       last_inspected_at = excluded.last_inspected_at
+     returning *`,
+    [
+      input.projectId,
+      input.url,
+      input.inspection ?? null,
+      input.inspectedAt?.toISOString() ?? null,
+    ]
+  );
+  return row ? rowToLink(row) : null;
 }
 
 export async function deleteGscManagedLink(
   projectId: string,
   linkId: string
 ): Promise<boolean> {
-  const admin = createAppAdminClient();
-  if (!admin) return false;
-
-  const { error } = await admin
-    .from("gsc_managed_links")
-    .delete()
-    .eq("project_id", projectId)
-    .eq("id", linkId);
-
-  return !error;
+  if (!isPostgresConfigured()) return false;
+  const row = await queryOne(
+    `delete from gsc_managed_links where project_id = $1 and id = $2 returning id`,
+    [projectId, linkId]
+  );
+  return Boolean(row);
 }
 
 export async function getGscManagedLink(
   projectId: string,
   linkId: string
 ): Promise<GscManagedLinkRow | null> {
-  const admin = createAppAdminClient();
-  if (!admin) return null;
-
-  const { data, error } = await admin
-    .from("gsc_managed_links")
-    .select("*")
-    .eq("project_id", projectId)
-    .eq("id", linkId)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data as GscManagedLinkRow;
+  if (!isPostgresConfigured()) return null;
+  const row = await queryOne(
+    `select * from gsc_managed_links where project_id = $1 and id = $2`,
+    [projectId, linkId]
+  );
+  return row ? rowToLink(row) : null;
 }
 
-/** URL → cached inspection row */
 export async function getGscLinksCacheByUrl(
   projectId: string,
   urls?: string[]
 ): Promise<Map<string, GscManagedLinkRow>> {
-  const admin = createAppAdminClient();
   const map = new Map<string, GscManagedLinkRow>();
-  if (!admin) return map;
+  if (!isPostgresConfigured()) return map;
 
   if (urls && urls.length > 0) {
-    const { data, error } = await admin
-      .from("gsc_managed_links")
-      .select("*")
-      .eq("project_id", projectId)
-      .in("url", urls);
-    if (error || !data) return map;
-    for (const row of data as GscManagedLinkRow[]) {
-      map.set(row.url, row);
+    const rows = await query(
+      `select * from gsc_managed_links where project_id = $1 and url = any($2)`,
+      [projectId, urls]
+    );
+    for (const row of rows) {
+      const link = rowToLink(row);
+      map.set(link.url, link);
     }
     return map;
   }

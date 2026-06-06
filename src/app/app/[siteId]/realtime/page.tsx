@@ -3,8 +3,8 @@ import { SetupBanner } from "@/components/SetupBanner";
 import { RealtimeView } from "@/components/dashboard/RealtimeView";
 import { fetchRecentRealtimeEvents } from "@/lib/realtime-events";
 import { getRegistryUser, getSiteForUser } from "@/lib/registry-sites";
-import { getSupabase } from "@/lib/supabase";
-import { getSupabaseForSite } from "@/lib/supabase-project";
+import { isPostgresConfigured } from "@/lib/db/config";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +14,8 @@ interface PageProps {
 
 export default async function RealtimePage({ params }: PageProps) {
   const { siteId } = await params;
-  const registry = await getSupabase();
 
-  if (!registry) {
+  if (!isSupabaseConfigured() || !isPostgresConfigured()) {
     return (
       <main className="px-4 py-10">
         <SetupBanner />
@@ -24,18 +23,11 @@ export default async function RealtimePage({ params }: PageProps) {
     );
   }
 
-  const user = await getRegistryUser(registry);
+  const user = await getRegistryUser();
   if (!user) notFound();
 
-  const siteRow = await getSiteForUser(registry, siteId, user.id);
+  const siteRow = await getSiteForUser(siteId, user.id);
   if (!siteRow) notFound();
-  if (!getSupabaseForSite(siteRow)) {
-    return (
-      <main className="px-4 py-10">
-        <SetupBanner />
-      </main>
-    );
-  }
 
   const events = await fetchRecentRealtimeEvents(siteRow);
 

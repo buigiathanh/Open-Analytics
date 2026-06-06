@@ -59,6 +59,11 @@ body {
   border: none;
 }
 
+.leaflet-div-icon.oa-island-label-icon {
+  background: transparent;
+  border: none;
+}
+
 .oa-avatar-marker-pin {
   display: flex;
   align-items: center;
