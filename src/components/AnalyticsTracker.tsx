@@ -7,8 +7,8 @@ import { DEFAULT_TRACKER_SCRIPT_URL } from "@/lib/constants";
 /** Self-tracking for the marketing site (hardcoded). */
 const SITE_TRACKER = {
   siteKey: "1b7033b1c695f1278e855e09",
-  scriptUrl: "http://localhost:3001/tracker.js?v=1.0.4",
-  endpoint: "http://localhost:3001/api/events",
+  scriptUrl: "https://analytics.gitopen.dev/tracker.js?v=1.0.4",
+  endpoint: "https://analytics.gitopen.dev/api/events",
 } as const;
 
 /** Path prefixes where the marketing-site tracker must not run (dashboard). */
