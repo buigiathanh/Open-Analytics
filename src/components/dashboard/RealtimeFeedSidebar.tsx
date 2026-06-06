@@ -93,7 +93,7 @@ export function RealtimeFeedSidebar({
                         img.src = isBot ? "/icons/bot.png" : v.avatar;
                       }}
                     />
-                    {!isBot && (
+                    {v.country_code ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={flagUrl}
@@ -109,7 +109,7 @@ export function RealtimeFeedSidebar({
                           img.src = ICON_GLOBE;
                         }}
                       />
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">

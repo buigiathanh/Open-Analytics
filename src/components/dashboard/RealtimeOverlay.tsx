@@ -33,6 +33,7 @@ const ICON_BTN_ACTIVE =
 interface RealtimeOverlayProps {
   site: Site;
   mode: "owner" | "public";
+  demoMode?: boolean;
   shareRealtimeEnabled: boolean;
   liveCount: number;
   mapViewMode: RealtimeMapMode;
@@ -46,6 +47,7 @@ interface RealtimeOverlayProps {
 export function RealtimeOverlay({
   site,
   mode,
+  demoMode = false,
   shareRealtimeEnabled: shareEnabledInitial,
   liveCount,
   mapViewMode,
@@ -151,6 +153,11 @@ export function RealtimeOverlay({
           </span>
           {liveCount} live
         </span>
+        {demoMode ? (
+          <span className="inline-flex items-center rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+            Demo data
+          </span>
+        ) : null}
         <span className="hidden text-xs text-zinc-500 dark:text-zinc-400 sm:inline">
           on {site.domain}
         </span>

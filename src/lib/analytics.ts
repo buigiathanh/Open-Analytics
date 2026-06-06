@@ -11,7 +11,7 @@ import {
 import { classifyChannel } from "./channels";
 import { countryName, referrerHost } from "./countries";
 import { computeStats, getLiveVisitors, getVisitPageviews } from "./stats";
-import { botCeoIdentity, botIconUrl, getBotDefinition, type BotId } from "./bots";
+import { botCeoIdentity, botHqLocation, botIconUrl, getBotDefinition, type BotId } from "./bots";
 import { visitorAvatarUrl, visitorDisplayName } from "./visitor-identity";
 import type { AnalyticsEvent, BotVisit, LiveVisitor, SiteStats } from "./types";
 
@@ -607,14 +607,15 @@ export function botVisitToFeedItem(visit: BotVisit): LiveFeedItem {
   const def = getBotDefinition(visit.bot_id);
   const iconUrl = botIconUrl(visit.bot_id);
   const ceo = botCeoIdentity(visit.bot_id);
+  const hq = botHqLocation(visit.bot_id);
   return {
-    visitor_id: `bot:${visit.id}`,
-    session_id: `bot:${visit.id}`,
+    visitor_id: `bot-${visit.id}`,
+    session_id: `bot-${visit.id}`,
     visit_id: null,
     path: visit.path,
-    country_code: null,
-    latitude: null,
-    longitude: null,
+    country_code: hq.countryCode,
+    latitude: hq.lat,
+    longitude: hq.lng,
     device: null,
     last_seen: visit.created_at,
     browser: null,

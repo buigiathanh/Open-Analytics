@@ -9,6 +9,7 @@ import {
   locationToAngles,
   type GlobeVisitor,
 } from "@/lib/visitor-globe-data";
+import { VisitorMapName } from "@/components/dashboard/VisitorMapName";
 import {
   visitorStatusColor,
   type VisitorStatusColor,
@@ -27,6 +28,11 @@ function cn(...parts: (string | false | undefined)[]) {
   return parts.filter(Boolean).join(" ");
 }
 
+/** Cobe uses marker ids in CSS custom properties — colons break visibility. */
+function globeMarkerId(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_-]/g, "-");
+}
+
 function angleDelta(current: number, target: number) {
   let delta = target - current;
   while (delta > Math.PI) delta -= 2 * Math.PI;
@@ -40,7 +46,7 @@ function lerpAngle(current: number, target: number, amount: number) {
 
 function isCobeMarkerVisible(id: string) {
   const value = getComputedStyle(document.documentElement)
-    .getPropertyValue(`--cobe-visible-${id}`)
+    .getPropertyValue(`--cobe-visible-${globeMarkerId(id)}`)
     .trim();
   return value === "N" || value === "1";
 }
@@ -76,7 +82,7 @@ function VisitorMarker({
 
   return (
     <button
-      ref={(el) => registerRef(visitor.id, el)}
+      ref={(el) => registerRef(globeMarkerId(visitor.id), el)}
       type="button"
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
@@ -93,7 +99,7 @@ function VisitorMarker({
         top: 0,
         transform: "translate(-50%, -50%)",
       }}
-      aria-label={`${visitor.displayName} on ${visitor.path}`}
+      aria-label={`${visitor.displayName}${visitor.isBot ? " Bot" : ""} on ${visitor.path}`}
     >
       <span
         className={cn(
@@ -110,6 +116,17 @@ function VisitorMarker({
           height={56}
           className="size-full rounded-full border-2 border-white bg-zinc-200 object-cover shadow-lg dark:border-zinc-900 dark:bg-zinc-800"
         />
+        {visitor.isBot ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src="/icons/bot.png"
+            alt=""
+            width={14}
+            height={14}
+            className="absolute -bottom-0.5 -right-0.5 size-[34%] min-w-3 min-h-3 rounded-[2px] border border-white bg-white object-contain p-px shadow-sm dark:border-zinc-900 dark:bg-zinc-900"
+            loading="lazy"
+          />
+        ) : null}
       </span>
     </button>
   );
@@ -131,7 +148,7 @@ function VisitorInfoPopup({
       style={style}
     >
       <p className="truncate text-[11px] font-semibold text-zinc-900 dark:text-zinc-100">
-        {visitor.displayName}
+        <VisitorMapName visitor={visitor} />
       </p>
       <p className="truncate font-mono text-[10px] text-zinc-500">
         {visitor.path}
@@ -357,7 +374,8 @@ export function VisitorGlobe({
       btn.style.top = `${y}px`;
       btn.style.opacity = visible ? "1" : "0";
       btn.style.pointerEvents = visible ? "auto" : "none";
-      btn.style.zIndex = selectedIdRef.current === id ? "30" : "10";
+      btn.style.zIndex =
+        globeMarkerId(selectedIdRef.current ?? "") === id ? "30" : "10";
     }
   }, []);
 
@@ -371,7 +389,7 @@ export function VisitorGlobe({
 
     const updatePopupPosition = () => {
       const outer = outerRef.current;
-      const marker = markerRefs.current.get(selectedId);
+      const marker = markerRefs.current.get(globeMarkerId(selectedId));
       if (!outer || !marker) {
         frame = requestAnimationFrame(updatePopupPosition);
         return;
@@ -457,7 +475,7 @@ export function VisitorGlobe({
       markers: visitorsRef.current.map((v) => ({
         location: v.location,
         size: 0.04,
-        id: v.id,
+        id: globeMarkerId(v.id),
       })),
     });
 
@@ -508,7 +526,7 @@ export function VisitorGlobe({
         markers: visitorsRef.current.map((v) => ({
           location: v.location,
           size: selectedIdRef.current === v.id ? 0.06 : 0.04,
-          id: v.id,
+          id: globeMarkerId(v.id),
         })),
       });
 
@@ -588,7 +606,7 @@ export function VisitorGlobe({
               />
             </div>
 
-            <div className="pointer-events-none absolute inset-0">
+            <div className="pointer-events-none absolute inset-0 z-10">
               {orderedVisitors.map((visitor) => (
                 <VisitorMarker
                   key={visitor.id}

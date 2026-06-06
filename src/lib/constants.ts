@@ -34,7 +34,7 @@ export const DEFAULT_BOT_MIDDLEWARE_HELPER_URL = BOT_MIDDLEWARE_HELPER_BASE;
 
 /** Live realtime demo on the marketing homepage (public share link). */
 export const DEMO_SHARE_REALTIME_URL =
-  "https://analytics.gitopen.dev/share/35db12b6-8921-4419-8bad-1c6518449ab4/realtime?theme=light&map=2d";
+  "https://analytics.gitopen.dev/share/35db12b6-8921-4419-8bad-1c6518449ab4/realtime?demo=1&theme=light&map=2d";
 
 /** Numeric enums — must match public/tracker.js */
 

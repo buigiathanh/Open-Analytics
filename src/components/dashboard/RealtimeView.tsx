@@ -6,10 +6,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useRealtimeSocket } from "@/hooks/useRealtimeSocket";
 import { REALTIME_WINDOW_MS } from "@/lib/constants";
-import { getLiveFeed, mergeLiveFeed } from "@/lib/analytics";
+import { mergeLiveFeed } from "@/lib/analytics";
 import { liveFeedToGlobeVisitors } from "@/lib/live-to-globe";
 import { prependAnalyticsEvent } from "@/lib/realtime-events-merge";
 import { prependBotVisit } from "@/lib/realtime-bot-visits-merge";
+import {
+  nextDemoRealtimeBotVisit,
+  nextDemoRealtimeEvent,
+} from "@/lib/realtime-demo-data";
 import {
   buildRealtimeShareUrl,
   parseRealtimeMapMode,
@@ -53,6 +57,8 @@ interface RealtimeViewProps {
   /** Owner dashboard (signed in) vs public /share link. */
   mode?: "owner" | "public";
   shareRealtimeEnabled?: boolean;
+  /** Fake data for UI preview (?demo=1). */
+  demoMode?: boolean;
 }
 
 function RealtimeViewInner({
@@ -61,6 +67,7 @@ function RealtimeViewInner({
   initialBotVisits = [],
   mode = "owner",
   shareRealtimeEnabled = false,
+  demoMode = false,
 }: RealtimeViewProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -114,12 +121,16 @@ function RealtimeViewInner({
     if (isSimpleView) {
       q.set("view", "simple");
     }
+    if (demoMode) {
+      q.set("demo", "1");
+    }
     router.replace(`${pathname}?${q.toString()}`, { scroll: false });
   }, [
     prefsReady,
     themeMode,
     mapViewMode,
     isSimpleView,
+    demoMode,
     pathname,
     router,
     resolvedTheme,
@@ -152,10 +163,32 @@ function RealtimeViewInner({
     setBotVisits((prev) => prependBotVisit(prev, visit));
   }, []);
 
-  useRealtimeSocket(site.id, {
-    onEvent: onRealtimeEvent,
-    onBotVisit: onRealtimeBotVisit,
-  });
+  useRealtimeSocket(
+    site.id,
+    {
+      onEvent: onRealtimeEvent,
+      onBotVisit: onRealtimeBotVisit,
+    },
+    !demoMode
+  );
+
+  useEffect(() => {
+    if (!demoMode) return;
+
+    const interval = window.setInterval(() => {
+      if (Math.random() < 0.42) {
+        setBotVisits((prev) =>
+          prependBotVisit(prev, nextDemoRealtimeBotVisit(site.site_key))
+        );
+      } else {
+        setEvents((prev) =>
+          prependAnalyticsEvent(prev, nextDemoRealtimeEvent(site.site_key))
+        );
+      }
+    }, 7_000);
+
+    return () => window.clearInterval(interval);
+  }, [demoMode, site.site_key]);
 
   const feed = useMemo(
     () => mergeLiveFeed(events, botVisits, REALTIME_WINDOW_MS),
@@ -202,6 +235,7 @@ function RealtimeViewInner({
         <RealtimeOverlay
           site={site}
           mode={mode}
+          demoMode={demoMode}
           shareRealtimeEnabled={shareRealtimeEnabled}
           liveCount={feed.length}
           mapViewMode={mapViewMode}

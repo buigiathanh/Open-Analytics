@@ -22,7 +22,8 @@ export function useRealtimeSocket(
   siteId: string,
   onEventOrHandlers:
     | ((event: AnalyticsEvent) => void)
-    | RealtimeSocketHandlers
+    | RealtimeSocketHandlers,
+  enabled = true
 ): void {
   const handlersRef = useRef<RealtimeSocketHandlers>({});
   handlersRef.current =
@@ -31,6 +32,7 @@ export function useRealtimeSocket(
       : onEventOrHandlers;
 
   useEffect(() => {
+    if (!enabled) return;
     let ws: WebSocket | null = null;
     let closed = false;
     let retryMs = 1000;
@@ -86,5 +88,5 @@ export function useRealtimeSocket(
       closed = true;
       ws?.close();
     };
-  }, [siteId]);
+  }, [siteId, enabled]);
 }

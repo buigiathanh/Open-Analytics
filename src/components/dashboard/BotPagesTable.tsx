@@ -1,12 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import type { BotPageRow } from "@/lib/bot-analytics";
 import {
   botIconUrl,
   getBotDefinition,
-  partitionPageBots,
   type BotId,
 } from "@/lib/bots";
 import type { Site } from "@/lib/types";
@@ -32,15 +29,11 @@ function pageUrl(site: Site, path: string): string {
   return `https://${domain}${p}`;
 }
 
-function BotBadge({ id, compact }: { id: BotId; compact?: boolean }) {
+function BotBadge({ id }: { id: BotId }) {
   const def = getBotDefinition(id);
   return (
     <span
-      className={
-        compact
-          ? "inline-flex max-w-[9rem] items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-          : "inline-flex max-w-[10rem] items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-      }
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
       title={def.label}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -57,81 +50,16 @@ function BotBadge({ id, compact }: { id: BotId; compact?: boolean }) {
   );
 }
 
-function BotOverflowBadge({ overflow }: { overflow: BotId[] }) {
-  const anchorRef = useRef<HTMLSpanElement>(null);
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  const updatePosition = useCallback(() => {
-    const el = anchorRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setPos({ top: rect.bottom + 6, left: rect.left });
-  }, []);
-
-  function show() {
-    updatePosition();
-    setOpen(true);
-  }
-
-  function hide() {
-    setOpen(false);
-  }
-
-  const tooltip =
-    open && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            role="tooltip"
-            className="pointer-events-none fixed z-[100] min-w-[140px] rounded-lg border border-zinc-200 bg-white p-2 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
-            style={{ top: pos.top, left: pos.left }}
-          >
-            <ul className="space-y-1.5">
-              {overflow.map((id) => (
-                <li key={id}>
-                  <BotBadge id={id} compact />
-                </li>
-              ))}
-            </ul>
-          </div>,
-          document.body
-        )
-      : null;
-
-  return (
-    <>
-      <span
-        ref={anchorRef}
-        className="inline-flex cursor-default rounded-md bg-zinc-100 px-1.5 py-0.5 text-xs font-medium tabular-nums text-zinc-600 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
-        onMouseEnter={show}
-        onMouseLeave={hide}
-        onFocus={show}
-        onBlur={hide}
-        tabIndex={0}
-      >
-        +{overflow.length} {overflow.length === 1 ? "bot" : "bots"}
-      </span>
-      {tooltip}
-    </>
-  );
-}
-
 function BotIconsCell({ botIds }: { botIds: BotId[] }) {
-  const { visible, overflow } = useMemo(
-    () => partitionPageBots(botIds),
-    [botIds]
-  );
-
   if (botIds.length === 0) {
     return <span className="text-xs text-zinc-400">—</span>;
   }
 
   return (
-    <div className="flex max-w-[320px] flex-wrap items-center gap-1.5">
-      {visible.map((id) => (
+    <div className="flex flex-nowrap items-center gap-1.5">
+      {botIds.map((id) => (
         <BotBadge key={id} id={id} />
       ))}
-      {overflow.length > 0 && <BotOverflowBadge overflow={overflow} />}
     </div>
   );
 }
@@ -188,7 +116,7 @@ export function BotPagesTable({
                     {row.path}
                   </a>
                 </td>
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-4 py-3">
                   <BotIconsCell botIds={row.botIds} />
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums text-zinc-600 dark:text-zinc-400">

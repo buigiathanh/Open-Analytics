@@ -46,8 +46,9 @@ export function liveFeedToGlobeVisitors(feed: LiveFeedItem[]): GlobeVisitor[] {
       path: v.path || "/",
       deviceLabel: DEVICE_LABEL[v.device ?? 0],
       browserLabel: BROWSER_LABEL[v.browser ?? 0],
-      source,
+      source: v.isBot ? v.botLabel ?? "Bot" : source,
       lastSeen: v.last_seen,
+      isBot: v.isBot,
     });
   }
 

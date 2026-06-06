@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 
 import {
+  getProjectById,
   getProjectForPublicShare,
   getProjectForUser,
   listProjectsForUser,
@@ -38,4 +39,12 @@ export async function getSiteForPublicShare(
 ): Promise<Site | null> {
   if (!isPostgresConfigured()) return null;
   return getProjectForPublicShare(siteId);
+}
+
+/** Share realtime demo preview — any valid project id (?demo=1). */
+export async function getSiteForShareDemo(
+  siteId: string
+): Promise<Site | null> {
+  if (!isPostgresConfigured()) return null;
+  return getProjectById(siteId);
 }

@@ -54,6 +54,15 @@ export async function getProjectForPublicShare(
   return row ? rowToSite(row, false) : null;
 }
 
+/** Load public site fields by id (for share demo preview without enabling share). */
+export async function getProjectById(siteId: string): Promise<Site | null> {
+  const row = await queryOne(
+    `select ${PUBLIC_SITE_COLUMNS} from projects where id = $1`,
+    [siteId]
+  );
+  return row ? rowToSite(row, false) : null;
+}
+
 export async function getProjectBySiteKey(
   siteKey: string
 ): Promise<Site | null> {

@@ -12,6 +12,7 @@ export type GlobeVisitor = {
   browserLabel: string;
   source: string;
   lastSeen: string;
+  isBot?: boolean;
 };
 
 function locationToVector([lat, lng]: [number, number]): [number, number, number] {

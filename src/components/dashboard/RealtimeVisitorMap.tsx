@@ -11,6 +11,7 @@ import {
   type VisitorStatusColor,
 } from "@/lib/visitor-identity";
 import type { GlobeVisitor } from "@/lib/visitor-globe-data";
+import { VisitorMapName } from "@/components/dashboard/VisitorMapName";
 import { VietnamIslandsMapLayer } from "@/components/dashboard/VietnamIslandsMapOverlay";
 
 const FOCUS_ZOOM = 8;
@@ -36,11 +37,17 @@ function buildAvatarIcon(
     ? `box-shadow:0 0 0 2px ${ring},0 0 0 4px #fff,0 4px 14px rgba(0,0,0,0.35)`
     : "box-shadow:0 2px 10px rgba(0,0,0,0.28)";
 
+  const botBadge = visitor.isBot
+    ? `<img src="/icons/bot.png" alt="" width="14" height="14"
+        style="position:absolute;right:-2px;bottom:-2px;width:34%;min-width:12px;min-height:12px;border-radius:2px;border:1px solid #fff;background:#fff;object-fit:contain;padding:1px;box-shadow:0 1px 2px rgba(0,0,0,0.15)" />`
+    : "";
+
   return L.divIcon({
     className: "oa-avatar-leaflet-icon",
-    html: `<div class="oa-avatar-marker-pin" style="width:${size}px;height:${size}px">
+    html: `<div class="oa-avatar-marker-pin" style="position:relative;width:${size}px;height:${size}px">
       <img src="${visitor.avatar.replace(/"/g, "&quot;")}" alt="" width="${size}" height="${size}"
         style="width:100%;height:100%;border-radius:50%;border:2px solid #fff;background-color:${bg};object-fit:cover;${ringStyle};transition:width 0.2s,height 0.2s,box-shadow 0.2s,background-color 0.2s" />
+      ${botBadge}
     </div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
@@ -154,7 +161,7 @@ function AvatarMarker({
         <Popup closeButton={false} offset={[0, -8]}>
           <div className="min-w-[140px] text-left text-xs">
             <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-              {visitor.displayName}
+              <VisitorMapName visitor={visitor} />
             </p>
             <p className="truncate font-mono text-[10px] text-zinc-500">
               {visitor.path}

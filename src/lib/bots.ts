@@ -299,6 +299,46 @@ export const BOT_OTHER: BotDefinition = {
   ceoAvatar: "/icons/bot.png",
 };
 
+/** Company HQ coordinates for globe / map placement. */
+export const BOT_HQ: Record<
+  BotId,
+  { lat: number; lng: number; countryCode: string }
+> = {
+  google: { lat: 37.422, lng: -122.0841, countryCode: "US" },
+  bing: { lat: 47.674, lng: -122.1215, countryCode: "US" },
+  ahrefs: { lat: 1.3521, lng: 103.8198, countryCode: "SG" },
+  semrush: { lat: 42.3601, lng: -71.0589, countryCode: "US" },
+  apple: { lat: 37.3349, lng: -122.009, countryCode: "US" },
+  chatgpt: { lat: 37.7955, lng: -122.3937, countryCode: "US" },
+  claude: { lat: 37.7897, lng: -122.3972, countryCode: "US" },
+  perplexity: { lat: 37.7749, lng: -122.4194, countryCode: "US" },
+  mistral: { lat: 48.8738, lng: 2.295, countryCode: "FR" },
+  deepseek: { lat: 30.2741, lng: 120.1551, countryCode: "CN" },
+  cohere: { lat: 43.6426, lng: -79.3871, countryCode: "CA" },
+  bytespider: { lat: 39.9042, lng: 116.4074, countryCode: "CN" },
+  commoncrawl: { lat: 37.7749, lng: -122.4194, countryCode: "US" },
+  diffbot: { lat: 37.4419, lng: -122.143, countryCode: "US" },
+  you: { lat: 37.4419, lng: -122.143, countryCode: "US" },
+  firecrawl: { lat: 37.7749, lng: -122.4194, countryCode: "US" },
+  meta: { lat: 37.4848, lng: -122.1484, countryCode: "US" },
+  yandex: { lat: 55.7558, lng: 37.6173, countryCode: "RU" },
+  duckduckgo: { lat: 40.042, lng: -75.4847, countryCode: "US" },
+  linkedin: { lat: 37.3688, lng: -122.0363, countryCode: "US" },
+  twitter: { lat: 37.7765, lng: -122.4167, countryCode: "US" },
+  pinterest: { lat: 37.7694, lng: -122.4069, countryCode: "US" },
+  baidu: { lat: 39.9042, lng: 116.4074, countryCode: "CN" },
+  amazon: { lat: 47.6062, lng: -122.3321, countryCode: "US" },
+  other: { lat: 37.7749, lng: -122.4194, countryCode: "US" },
+};
+
+export function botHqLocation(id: BotId): {
+  lat: number;
+  lng: number;
+  countryCode: string;
+} {
+  return BOT_HQ[id] ?? BOT_HQ.other;
+}
+
 export function classifyBot(userAgent: string | null | undefined): BotId {
   const ua = userAgent?.trim() ?? "";
   if (!ua) return "other";
