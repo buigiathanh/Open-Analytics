@@ -128,6 +128,25 @@ export function buildTimeSeries(
   return buckets;
 }
 
+export function formatShortDayLabel(dateIso: string): string {
+  const d = new Date(`${dateIso}T12:00:00`);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export function buildProjectCardTrend(events: AnalyticsEvent[], days = 7) {
+  const series = buildTimeSeries(events, days);
+  const visitorTotal = series.reduce((sum, point) => sum + point.visitors, 0);
+
+  return {
+    series: series.map((point) => ({
+      label: formatShortDayLabel(point.date),
+      value: point.visitors,
+    })),
+    visitorTotal,
+    hasTracking: events.length > 0,
+  };
+}
+
 function aggregateCounts(
   items: { key: string; label: string; icon?: string; iconUrl?: string }[],
   total: number
